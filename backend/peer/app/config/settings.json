@@ -1,0 +1,4 @@
+{
+    "peer_port": 5000,
+    "heartbeat_interval": 30
+}

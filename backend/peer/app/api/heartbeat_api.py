@@ -1,24 +1,22 @@
 import requests
 from dotenv import load_dotenv
-
 import os
 
 load_dotenv()
-class PeerAPI:
+TRACKER_URL = os.getenv("TRACKER_URL")
 
-    TRACKER_URL = os.getenv("TRACKER_URL")
+class HeartbeatAPI:
+
     @classmethod
-    def register_peer(
+    def send_heartbeat(
         cls,
-        peer_id: str,
-        port: int
+        peer_id: str
     ):
 
         response = requests.post(
-            f"{cls.TRACKER_URL}/register-peer",
+            f"{TRACKER_URL}/heartbeat",
             json={
-                "peer_id": peer_id,
-                "port": port
+                "peer_id": peer_id
             }
         )
 

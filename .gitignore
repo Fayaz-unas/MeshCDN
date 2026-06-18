@@ -11,6 +11,9 @@ postgres_data/
 # Docker
 docker-data
 
+# Temporary copies
+peercopy/
+
 ### NextJS ###
 # dependencies
 /node_modules
@@ -396,3 +399,6 @@ pip-selfcheck.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/python,react,nextjs,visualstudiocode,venv,node
+
+#for testing
+peer_copy/

@@ -1,20 +1,27 @@
 from services.peer_identity_service import PeerIdentityService
-from api.peer_api import PeerAPI
+from api.registration_api import RegistrationAPI 
+from services.settings_service import SettingsService
 
+port = SettingsService.get_peer_port()
 
 class RegistrationService:
 
     @staticmethod
     def register():
 
-        peer_id = (
+        identity = (
             PeerIdentityService
-            .get_or_create_peer_id()
+            .get_or_create_identity()
         )
 
-        response = PeerAPI.register_peer(
+        peer_id = identity["peer_id"]
+        installation_id = identity["installation_id"]
+
+        response = RegistrationAPI.register_peer(
             peer_id=peer_id,
-            port=5000
+            installation_id=installation_id,
+            port=port
+            
         )
 
         return response

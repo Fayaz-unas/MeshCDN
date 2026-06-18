@@ -19,6 +19,7 @@ def register_peer(
     peer_data = PeerService.register_peer(
         db=db,
         peer_id=peer.peer_id,
+        installation_id=peer.installation_id,
         ip_address=request.client.host,
         port=peer.port
     )

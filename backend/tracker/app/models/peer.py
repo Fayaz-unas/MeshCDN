@@ -26,6 +26,12 @@ class Peer(Base):
         nullable=False
     )
 
+    installation_id = Column(
+        String(100),
+        unique=True,
+        nullable=False
+    )
+
     ip_address = Column(
         String(45),
         nullable=False

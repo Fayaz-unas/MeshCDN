@@ -17,6 +17,18 @@ class PeerRepository:
             .filter(Peer.peer_id == peer_id)
             .first()
         )
+    
+    @staticmethod
+    def get_by_installation_id( 
+        db: Session,
+        installation_id: str
+    ):
+        return (
+            db.query(Peer)
+            .filter(Peer.installation_id == installation_id)
+            .first()
+        )
+    
 
     @staticmethod
     def create_peer(
