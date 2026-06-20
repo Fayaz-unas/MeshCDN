@@ -25,6 +25,8 @@ class RegistrationAPI:
             }
         )
 
-        response.raise_for_status()
-
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise Exception(f"Failed to register peer: {e}")
         return response.json()

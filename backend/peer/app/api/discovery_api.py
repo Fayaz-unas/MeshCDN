@@ -1,12 +1,14 @@
 import requests
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+
+BASE_URL = os.getenv("TRACKER_URL")
 
 class DiscoveryAPI:
 
-    BASE_URL = (
-        "http://127.0.0.1:8000"
-    )
-
+    
     @classmethod
     def get_peers(cls):
 
