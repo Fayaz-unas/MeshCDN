@@ -1,12 +1,21 @@
 import asyncio
+import logging
+import socket
 
 from networking.protocol import (
-    MessageTypes,
     Protocol
 )
 
 from networking.connection_manager import (
     ConnectionManager
+)
+
+from protocol_handlers.message_handler import (
+    MessageHandler
+)
+
+logger = logging.getLogger(
+    __name__
 )
 
 
@@ -28,8 +37,9 @@ class PeerServer:
             "peername"
         )
 
-        print(
-            f"Incoming connection: {address}"
+        logger.info(
+            f"Incoming connection: "
+            f"{address}"
         )
 
         connected_peer_id = None
@@ -44,104 +54,90 @@ class PeerServer:
 
                 if not data:
 
-                    print(
-                        "Client closed connection"
+                    logger.info(
+                        "Client closed "
+                        "connection"
                     )
 
                     break
 
-                message = Protocol.parse_message(
-                    data.decode()
-                )
+                try:
 
-                message_type = (
-                    Protocol.get_type(
-                        message
-                    )
-                )
-
-                payload = (
-                    Protocol.get_payload(
-                        message
-                    )
-                )
-
-                if message_type == MessageTypes.HELLO:
-
-                    connected_peer_id = (
-                        payload["peer_id"]
+                    message = (
+                        Protocol.parse_message(
+                            data.decode()
+                        )
                     )
 
-                    print(
-                        f"Peer ID: "
-                        f"{payload['peer_id']}"
+                    message_type = (
+                        Protocol.get_type(
+                            message
+                        )
                     )
 
-                    print(
-                        f"Installation ID: "
-                        f"{payload['installation_id']}"
+                    payload = (
+                        Protocol.get_payload(
+                            message
+                        )
                     )
 
-                    self.connection_manager.add_peer(
-                        peer_id=payload[
-                            "peer_id"
-                        ],
-                        installation_id=payload[
-                            "installation_id"
-                        ],
-                        address=address
+                    peer_id, response = (
+                        MessageHandler.handle(
+                            message_type=
+                            message_type,
+
+                            payload=
+                            payload,
+
+                            address=
+                            address,
+
+                            connection_manager=
+                            self.connection_manager
+                        )
                     )
 
-                    print(
-                        "\nConnected Peers:"
-                    )
+                    if peer_id:
 
-                    print(
-                        self.connection_manager
-                        .get_all_peers()
-                    )
+                        connected_peer_id = (
+                            peer_id
+                        )
 
                     writer.write(
-                        Protocol.create_message(
-                            MessageTypes.WELCOME
-                        ).encode()
+                        response.encode()
                     )
 
                     await writer.drain()
 
-                elif message_type == MessageTypes.PING:
+                except ValueError as e:
 
-                    print(
-                        "PING received"
+                    logger.warning(
+                        f"Protocol Error: "
+                        f"{e}"
                     )
 
-                    writer.write(
-                        Protocol.create_message(
-                            MessageTypes.PONG
-                        ).encode()
+                except KeyError as e:
+
+                    logger.warning(
+                        f"Missing Field: "
+                        f"{e}"
                     )
 
-                    await writer.drain()
+        except Exception:
 
-        except Exception as e:
-
-            print(
-                f"Connection Error: {e}"
+            logger.exception(
+                "Connection error"
             )
 
         finally:
 
-            print(
-                "\n=== FINALLY BLOCK REACHED ==="
+            logger.info(
+                "Cleaning up connection"
             )
 
             writer.close()
 
             await writer.wait_closed()
-
-            print(
-                "Socket Closed"
-            )
 
             if connected_peer_id:
 
@@ -149,13 +145,9 @@ class PeerServer:
                     connected_peer_id
                 )
 
-            print(
-                "Current Connections:"
-            )
-
-            print(
-                self.connection_manager
-                .get_all_peers()
+            logger.info(
+                f"Current Connections: "
+                f"{self.connection_manager.get_all_peers()}"
             )
 
     async def start(
@@ -164,16 +156,25 @@ class PeerServer:
         port: int
     ):
 
-        server = await asyncio.start_server(
-            self.handle_connection,
-            host,
-            port
+        # Create a socket with SO_REUSEADDR to allow quick port reuse
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind((host, port))
+        sock.listen(128)
+        sock.setblocking(False)
+
+        server = (
+            await asyncio.start_server(
+                self.handle_connection,
+                sock=sock
+            )
         )
 
-        print(
-            f"Peer server listening on "
-            f"{host}:{port}"
+        logger.info(
+            f"Peer server listening "
+            f"on {host}:{port}"
         )
 
         async with server:
+
             await server.serve_forever()
