@@ -66,3 +66,9 @@ class Peer(Base):
     "File",
     back_populates="created_by"
     )
+
+    owned_files = relationship(
+    "PeerFileState",
+    back_populates="peer",
+    cascade="all, delete-orphan",
+    )

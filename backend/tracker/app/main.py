@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from app.api.peer_routes import router as peer_router
 from app.api.file_routes import router as file_router
+from app.api.peer_file_state_routes import router as peer_file_state_router
 from app.tasks.peer_cleanup import cleanup_inactive_peers
 
 
@@ -31,7 +32,7 @@ app = FastAPI(
 
 app.include_router(peer_router)
 app.include_router(file_router)
-
+app.include_router(peer_file_state_router)
 
 @app.get("/")
 def root():

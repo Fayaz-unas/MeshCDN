@@ -40,6 +40,13 @@ class File(Base):
         index=True
     )
 
+    manifest_hash = Column(
+    String(64),
+    unique=True,
+    nullable=False,
+    index=True
+    )
+
     file_name = Column(
         String(255),
         nullable=False
@@ -83,6 +90,8 @@ class File(Base):
         nullable=False
     )
 
+    
+
     # ------------------------------------------------------------------
     # Relationships
     # ------------------------------------------------------------------
@@ -91,3 +100,9 @@ class File(Base):
     "Peer",
     back_populates="registered_files"
    )
+    
+    owners = relationship(
+    "PeerFileState",
+    back_populates="file",
+    cascade="all, delete-orphan",
+    )

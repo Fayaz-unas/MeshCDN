@@ -32,6 +32,7 @@ class FileService:
 
         file = File(
             file_hash=request.file_hash,
+            manifest_hash=request.manifest_hash,
             file_name=request.file_name,
             file_size=request.file_size,
             chunk_size=request.chunk_size,

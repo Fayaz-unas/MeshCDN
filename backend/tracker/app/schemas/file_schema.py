@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class RegisterFileRequest(BaseModel):
     file_hash: str
+    manifest_hash: str
     file_name: str
     file_size: int
     chunk_size: int
@@ -17,6 +18,7 @@ class RegisterFileRequest(BaseModel):
 class FileMetadataResponse(BaseModel):
     id: int
     file_hash: str
+    manifest_hash: str
     file_name: str
     file_size: int
     chunk_size: int
@@ -32,6 +34,7 @@ class FileMetadataResponse(BaseModel):
 class FileListResponse(BaseModel):
     id: int
     file_hash: str
+    manifest_hash: str
     file_name: str
     file_size: int
     total_chunks: int
