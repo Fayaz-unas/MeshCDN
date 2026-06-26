@@ -8,6 +8,8 @@ from sqlalchemy import (
     func
 )
 
+from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 
 
@@ -45,7 +47,7 @@ class Peer(Base):
     status = Column(
         String(10),
         nullable=False,
-        default="Online"
+        default="online"
     )
 
     created_at = Column(
@@ -58,4 +60,9 @@ class Peer(Base):
         DateTime,
         server_default=func.now(),
         nullable=False
+    )
+
+    registered_files = relationship(
+    "File",
+    back_populates="created_by"
     )
