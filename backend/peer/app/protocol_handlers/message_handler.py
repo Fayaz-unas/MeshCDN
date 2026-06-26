@@ -10,6 +10,10 @@ from protocol_handlers.ping_handler import (
     PingHandler
 )
 
+from protocol_handlers.request_chunk_handler import (
+    RequestChunkHandler
+)
+
 
 class MessageHandler:
 
@@ -18,7 +22,8 @@ class MessageHandler:
         message_type,
         payload,
         address,
-        connection_manager
+        connection_manager,
+        shared_file_service
     ):
 
         if (
@@ -30,7 +35,9 @@ class MessageHandler:
             return (
                 HelloHandler.handle(
                     payload=payload,
+
                     address=address,
+
                     connection_manager=
                     connection_manager
                 )
@@ -44,10 +51,34 @@ class MessageHandler:
 
             return (
                 None,
+
                 PingHandler.handle()
             )
 
+        if (
+            message_type
+            ==
+            MessageTypes.REQUEST_CHUNK
+        ):
+
+            return (
+                None,
+
+                RequestChunkHandler.handle(
+
+                    payload=
+                    payload,
+
+                    shared_file_service=
+                    shared_file_service
+
+                )
+            )
+
         raise ValueError(
+
             f"Unknown message type: "
+
             f"{message_type}"
+
         )

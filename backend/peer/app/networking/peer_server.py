@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import socket
+import struct
 
 from networking.protocol import (
     Protocol
@@ -14,6 +15,26 @@ from protocol_handlers.message_handler import (
     MessageHandler
 )
 
+from services.chunk_service import (
+    ChunkService
+)
+
+from services.file_service import (
+    FileService
+)
+
+from services.hash_service import (
+    HashService
+)
+
+from services.shared_file_service import (
+    SharedFileService
+)
+
+
+
+
+
 logger = logging.getLogger(
     __name__
 )
@@ -25,6 +46,30 @@ class PeerServer:
 
         self.connection_manager = (
             ConnectionManager()
+        )
+
+        self.shared_file_service = (
+            SharedFileService()
+        )
+
+    async def receive_message(
+        self,
+        reader: asyncio.StreamReader
+    ) -> str:
+        
+        header = await reader.readexactly(4)
+
+        message_length = struct.unpack(
+            "!I",
+            header
+        )[0]
+
+        payload = await reader.readexactly(
+            message_length
+        )
+
+        return payload.decode(
+        "utf-8"
         )
 
     async def handle_connection(
@@ -48,15 +93,18 @@ class PeerServer:
 
             while True:
 
-                data = await reader.read(
-                    1024
-                )
+                try:
 
-                if not data:
+                    raw_message = (
+                        await self.receive_message(
+                            reader
+                        )
+                    )
+
+                except asyncio.IncompleteReadError:
 
                     logger.info(
-                        "Client closed "
-                        "connection"
+                        "Client disconnected."
                     )
 
                     break
@@ -65,7 +113,7 @@ class PeerServer:
 
                     message = (
                         Protocol.parse_message(
-                            data.decode()
+                            raw_message
                         )
                     )
 
@@ -93,7 +141,10 @@ class PeerServer:
                             address,
 
                             connection_manager=
-                            self.connection_manager
+                            self.connection_manager,
+
+                            shared_file_service=
+                            self.shared_file_service
                         )
                     )
 
@@ -103,8 +154,21 @@ class PeerServer:
                             peer_id
                         )
 
+                    encoded = response.encode(
+                        "utf-8"
+                    )
+
                     writer.write(
-                        response.encode()
+
+                        struct.pack(
+                            "!I",
+                            len(encoded)
+                        )
+
+                        +
+
+                        encoded
+
                     )
 
                     await writer.drain()
@@ -156,12 +220,31 @@ class PeerServer:
         port: int
     ):
 
-        # Create a socket with SO_REUSEADDR to allow quick port reuse
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind((host, port))
-        sock.listen(128)
-        sock.setblocking(False)
+        sock = socket.socket(
+            socket.AF_INET,
+            socket.SOCK_STREAM
+        )
+
+        sock.setsockopt(
+            socket.SOL_SOCKET,
+            socket.SO_REUSEADDR,
+            1
+        )
+
+        sock.bind(
+            (
+                host,
+                port
+            )
+        )
+
+        sock.listen(
+            128
+        )
+
+        sock.setblocking(
+            False
+        )
 
         server = (
             await asyncio.start_server(
@@ -178,3 +261,41 @@ class PeerServer:
         async with server:
 
             await server.serve_forever()
+
+
+    def share_file(
+            self,
+            file_path: str
+        ) -> str:
+
+        file_metadata = (
+            FileService.register_file(
+            file_path=
+            file_path
+            )
+        )
+
+        file_hash = (
+            HashService.hash_file(
+                file_metadata.file_path
+            )
+        )
+
+        chunks = (
+            ChunkService.create_chunks(
+                file_metadata
+            )
+        )
+
+        self.shared_file_service.register_file(
+            file_hash=
+            file_hash,
+
+            file_metadata=
+            file_metadata,
+
+            chunks=
+            chunks
+        )
+
+        return file_hash

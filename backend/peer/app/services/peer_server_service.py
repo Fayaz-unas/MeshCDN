@@ -5,32 +5,52 @@ from networking.peer_server import (
     PeerServer
 )
 
-from services.settings_service import SettingsService
+from services.settings_service import (
+    SettingsService
+)
 
 port = SettingsService.get_peer_port()
 
 
-
 class PeerServerService:
 
-    @staticmethod
-    async def run_server():
+    _server: PeerServer | None = None
 
-        server = PeerServer()
+    @classmethod
+    def get_server(
+        cls
+    ) -> PeerServer | None:
 
-        await server.start(
+        return cls._server
+
+    @classmethod
+    async def run_server(
+        cls
+    ):
+
+        cls._server = (
+            PeerServer()
+        )
+
+        await cls._server.start(
             "0.0.0.0",
             port
         )
 
-    @staticmethod
-    def start():
+    @classmethod
+    def start(
+        cls
+    ):
 
         server_thread = threading.Thread(
-            target=lambda: asyncio.run(
-                PeerServerService.run_server()
+
+            target=lambda:
+            asyncio.run(
+                cls.run_server()
             ),
+
             daemon=True
+
         )
 
         server_thread.start()

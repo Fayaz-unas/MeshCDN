@@ -9,6 +9,12 @@ class MessageTypes:
     PING = "PING"
     PONG = "PONG"
 
+    REQUEST_CHUNK = "REQUEST_CHUNK"
+
+    CHUNK_DATA = "CHUNK_DATA"
+
+    CHUNK_NOT_FOUND = "CHUNK_NOT_FOUND"
+
 
 class Protocol:
 

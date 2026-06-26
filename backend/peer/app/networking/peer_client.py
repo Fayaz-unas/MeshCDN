@@ -1,11 +1,11 @@
 import socket
+import struct
 
 
 class PeerClient:
 
-    def __init__(
-        self
-    ):
+    def __init__(self):
+
         self.client = None
 
     def connect(
@@ -13,97 +13,91 @@ class PeerClient:
         host: str,
         port: int
     ):
-        """Connect to a peer server."""
-        try:
-            self.client = socket.socket()
-            self.client.connect(
-                (
-                    host,
-                    port
-                )
-            )
-            print(f"✅ Connected to {host}:{port}")
 
-        except socket.gaierror as e:
-            print(f"❌ Invalid host/port: {e}")
-            raise Exception(f"Cannot connect to {host}:{port}: Invalid address")
-        
-        except socket.timeout as e:
-            print(f"❌ Connection timeout to {host}:{port}: {e}")
-            raise Exception(f"Connection timeout: {host}:{port}")
-        
-        except ConnectionRefusedError as e:
-            print(f"❌ Connection refused by {host}:{port}: {e}")
-            raise Exception(f"Peer not responding: {host}:{port}")
-        
-        except Exception as e:
-            print(f"❌ Failed to connect to {host}:{port}: {e}")
-            raise
+        self.client = socket.socket(
+            socket.AF_INET,
+            socket.SOCK_STREAM
+        )
+
+        self.client.connect(
+            (
+                host,
+                port
+            )
+        )
+
+        print(
+            f"Connected to {host}:{port}"
+        )
+
+    def _receive_exact(
+        self,
+        size: int
+    ) -> bytes:
+
+        data = b""
+
+        while len(data) < size:
+
+            packet = self.client.recv(
+                size - len(data)
+            )
+
+            if not packet:
+
+                raise ConnectionError(
+                    "Connection closed."
+                )
+
+            data += packet
+
+        return data
 
     def send_message(
         self,
         message: str
     ):
-        """Send message to connected peer."""
-        try:
-            if not self.client:
-                raise Exception("Not connected to any peer")
-            self.client.send(
-                message.encode()
-            )
-            print(f"📤 Message sent: {message[:50]}")
 
-        except AttributeError as e:
-            print(f"❌ Socket error: {e}")
-            raise Exception("Connection closed unexpectedly")
-        
-        except BrokenPipeError as e:
-            print(f"❌ Peer disconnected: {e}")
-            raise Exception("Peer disconnected")
-        
-        except Exception as e:
-            print(f"❌ Failed to send message: {e}")
-            raise
+        encoded = message.encode(
+            "utf-8"
+        )
+
+        length = struct.pack(
+            "!I",
+            len(encoded)
+        )
+
+        self.client.sendall(
+            length + encoded
+        )
 
     def receive_message(
         self
-    ):
-        """Receive message from connected peer."""
-        try:
-            if not self.client:
-                raise Exception("Not connected to any peer")
-            data = self.client.recv(
-                1024
-            )
-            if not data:
-                print("⚠️  Received empty data from peer")
-                return None
-            message = data.decode()
-            print(f"📥 Message received: {message[:50]}")
-            return message
-        
-        except socket.timeout as e:
-            print(f"⚠️  Receive timeout: {e}")
-            raise Exception("Receive timeout")
-        
-        except UnicodeDecodeError as e:
-            print(f"❌ Failed to decode message: {e}")
-            raise Exception("Invalid message format")
-        
-        except Exception as e:
-            print(f"❌ Failed to receive message: {e}")
-            raise
+    ) -> str:
+
+        header = self._receive_exact(
+            4
+        )
+
+        length = struct.unpack(
+            "!I",
+            header
+        )[0]
+
+        payload = self._receive_exact(
+            length
+        )
+
+        return payload.decode(
+            "utf-8"
+        )
 
     def disconnect(
         self
     ):
-        """Disconnect from peer server."""
-        try:
-            if self.client:
-                self.client.close()
-                print("✅ Disconnected from peer")
-                self.client = None
-                
-        except Exception as e:
-            print(f"❌ Error during disconnect: {e}")
+
+        if self.client:
+
+            self.client.close()
+
             self.client = None
