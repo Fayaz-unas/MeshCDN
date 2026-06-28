@@ -1,17 +1,14 @@
-import time
 import logging
-from pathlib import Path
-
-from services.peer_registration_service import (
-    RegistrationService
-)
+import time
 
 from services.heartbeat_service import (
-    HeartbeatService
+    HeartbeatService,
 )
-
+from services.peer_registration_service import (
+    RegistrationService,
+)
 from services.peer_server_service import (
-    PeerServerService
+    PeerServerService,
 )
 
 logging.basicConfig(
@@ -21,26 +18,26 @@ logging.basicConfig(
         "%(name)s - "
         "%(levelname)s - "
         "%(message)s"
-    )
+    ),
 )
 
 
 def main():
 
+    logging.info(
+        "Starting MeshCDN Peer..."
+    )
+
     response = (
         RegistrationService.register()
     )
 
-    print(response)
+    logging.info(response)
 
     HeartbeatService.start()
 
     PeerServerService.start()
 
-    #
-    # Wait until the PeerServer
-    # instance is created.
-    #
     while (
         PeerServerService.get_server()
         is None
@@ -50,72 +47,9 @@ def main():
             0.1
         )
 
-    server = (
-        PeerServerService.get_server()
+    logging.info(
+        "Peer started successfully."
     )
-
-    #
-    # Development only.
-    #
-    # Automatically share a file
-    # when the peer starts.
-    #
-    sample_file = (
-        Path(__file__).parent
-        / "test"
-        / "sample.pdf"
-    )
-
-    if sample_file.exists():
-
-        file_hash = (
-            server.share_file(
-                str(sample_file)
-            )
-        )
-
-        print()
-
-        print(
-            "=" * 60
-        )
-
-        print(
-            "Sample file shared"
-        )
-
-        print(
-            f"File : {sample_file.name}"
-        )
-
-        print(
-            f"Hash : {file_hash}"
-        )
-
-        print(
-            "=" * 60
-        )
-
-    else:
-
-        print()
-
-        print(
-            "=" * 60
-        )
-
-        print(
-            "sample.pdf not found."
-        )
-
-        print(
-            "Peer started without "
-            "sharing any file."
-        )
-
-        print(
-            "=" * 60
-        )
 
     while True:
 

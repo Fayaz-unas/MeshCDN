@@ -1,128 +1,185 @@
 import logging
+from threading import Lock
 
-from models.file_metadata import (
-    FileMetadata
-)
+from models.chunk_metadata import ChunkMetadata
+from models.file_metadata import FileMetadata
+from models.manifest import Manifest
 
-from models.chunk_metadata import (
-    ChunkMetadata
-)
-
-logger = logging.getLogger(
-    __name__
-)
+logger = logging.getLogger(__name__)
 
 
 class SharedFileService:
+    """
+    Local shared file registry.
 
-    def __init__(self):
+    Maintains all files currently shared by this peer.
 
-        self._shared_files = {}
+    Singleton:
+        There is exactly one registry for the lifetime
+        of the peer process.
+    """
+
+    _instance = None
+    _lock = Lock()
+
+    def __new__(cls):
+
+        if cls._instance is None:
+
+            with cls._lock:
+
+                if cls._instance is None:
+
+                    cls._instance = super().__new__(cls)
+
+                    cls._instance._shared_files = {}
+
+        return cls._instance
+
+    # ---------------------------------------------------------
+    # Register
+    # ---------------------------------------------------------
 
     def register_file(
         self,
+        *,
         file_hash: str,
+        manifest: Manifest,
         file_metadata: FileMetadata,
-        chunks: list[ChunkMetadata]
+        chunks: list[ChunkMetadata],
     ) -> None:
 
         if file_hash in self._shared_files:
 
             logger.warning(
-                f"File already shared: "
-                f"{file_hash}"
+                "File already shared: %s",
+                file_hash,
             )
 
             return
 
-        self._shared_files[
-            file_hash
-        ] = {
+        self._shared_files[file_hash] = {
+
+            "file_hash": file_hash,
+
+            "manifest_hash":
+                manifest.manifest_hash,
+
+            "manifest":
+                manifest,
 
             "file_metadata":
                 file_metadata,
 
             "chunks":
-                chunks
-
+                chunks,
         }
 
         logger.info(
-            f"Registered shared file: "
-            f"{file_metadata.file_name}"
+            "Registered shared file: %s",
+            file_metadata.file_name,
         )
+
+    # ---------------------------------------------------------
+    # Unregister
+    # ---------------------------------------------------------
 
     def unregister_file(
         self,
-        file_hash: str
+        file_hash: str,
     ) -> None:
 
-        if (
-            file_hash
-            in
-            self._shared_files
-        ):
+        if file_hash not in self._shared_files:
+            return
 
-            del self._shared_files[
-                file_hash
-            ]
+        del self._shared_files[file_hash]
 
-            logger.info(
-                f"Removed shared file: "
-                f"{file_hash}"
-            )
+        logger.info(
+            "Removed shared file: %s",
+            file_hash,
+        )
+
+    # ---------------------------------------------------------
+    # Queries
+    # ---------------------------------------------------------
+
+    def has_file(
+        self,
+        file_hash: str,
+    ) -> bool:
+
+        return file_hash in self._shared_files
 
     def get_shared_file(
-        self
-        ,file_hash: str
+        self,
+        file_hash: str,
     ) -> dict | None:
-        
+
         return self._shared_files.get(
             file_hash
         )
 
     def get_file_metadata(
         self,
-        file_hash: str
+        file_hash: str,
     ) -> FileMetadata | None:
-        
-        shared_file = (
-            self.get_shared_file(
-                file_hash
-            )
+
+        shared_file = self.get_shared_file(
+            file_hash
         )
-        
-        
+
         if shared_file is None:
             return None
-        
-        
+
         return shared_file[
             "file_metadata"
-       ]
-    
+        ]
 
-
-    def get_chunk(        
+    def get_manifest(
         self,
         file_hash: str,
-        chunk_index: int
-    ) -> ChunkMetadata | None:
-        
-        shared_file = (
-            self.get_shared_file(
-                file_hash
-            )
+    ) -> Manifest | None:
+
+        shared_file = self.get_shared_file(
+            file_hash
         )
-        
-        
+
         if shared_file is None:
             return None
 
-        chunks = shared_file[
+        return shared_file[
+            "manifest"
+        ]
+
+    def get_chunks(
+        self,
+        file_hash: str,
+    ) -> list[ChunkMetadata] | None:
+
+        shared_file = self.get_shared_file(
+            file_hash
+        )
+
+        if shared_file is None:
+            return None
+
+        return shared_file[
             "chunks"
         ]
-        
+
+    def get_chunk(
+        self,
+        file_hash: str,
+        chunk_index: int,
+    ) -> ChunkMetadata | None:
+
+        chunks = self.get_chunks(
+            file_hash
+        )
+
+        if chunks is None:
+            return None
+
         if (
             chunk_index < 0
             or
@@ -133,23 +190,27 @@ class SharedFileService:
         return chunks[
             chunk_index
         ]
-    
-    
-    def has_file(
-        self,
-        file_hash: str
-    ) -> bool:
 
-        return (
-            file_hash
-            in
+    def get_all_files(
+        self,
+    ) -> dict:
+
+        return self._shared_files
+
+    def total_shared_files(
+        self,
+    ) -> int:
+
+        return len(
             self._shared_files
         )
 
-    def get_all_files(
-        self
-    ) -> dict:
+    def clear(
+        self,
+    ) -> None:
 
-        return (
-            self._shared_files
+        self._shared_files.clear()
+
+        logger.info(
+            "Shared file registry cleared."
         )
