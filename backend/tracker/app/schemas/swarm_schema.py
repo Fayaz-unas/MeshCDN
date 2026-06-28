@@ -9,10 +9,11 @@ from pydantic import BaseModel, ConfigDict
 
 class SwarmFileInfo(BaseModel):
     """
-    File metadata returned during swarm discovery.
+    Metadata describing the requested file.
     """
 
     file_hash: str
+
     manifest_hash: str
 
     file_name: str
@@ -32,17 +33,28 @@ class SwarmFileInfo(BaseModel):
 
 class SwarmStatistics(BaseModel):
     """
-    Overall swarm information.
+    Overall swarm health and availability.
     """
 
+    # Total peers that own this file
     total_peers: int
 
+    # Peers currently online
     online_peers: int
 
+    # Peers currently offline
+    offline_peers: int
+
+    # Online seeders
     seeders: int
 
+    # Online leechers
     leechers: int
 
+    # Can the file currently be reconstructed?
+    file_available: bool
+
+    # Response generation timestamp
     generated_at: datetime
 
 
@@ -52,7 +64,8 @@ class SwarmStatistics(BaseModel):
 
 class SwarmPeer(BaseModel):
     """
-    Peer returned during swarm discovery.
+    Information about an online peer participating
+    in the swarm.
     """
 
     model_config = ConfigDict(from_attributes=True)

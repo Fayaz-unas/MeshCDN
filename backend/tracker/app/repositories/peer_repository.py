@@ -78,3 +78,29 @@ class PeerRepository:
         )
         
         db.commit()
+
+
+    @staticmethod
+    def get_by_ids(
+    db: Session,
+    peer_ids: list[int]
+    ):
+        return (
+        db.query(Peer)
+        .filter(Peer.id.in_(peer_ids))
+        .all()
+    )
+
+    @staticmethod
+    def get_online_by_ids(
+    db: Session,
+    peer_ids: list[int]
+   ):
+        return (
+        db.query(Peer)
+        .filter(
+            Peer.id.in_(peer_ids),
+            Peer.status == "online"
+            )
+        .all()
+        )

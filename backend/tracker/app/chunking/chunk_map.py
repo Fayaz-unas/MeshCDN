@@ -121,6 +121,70 @@ class ChunkMap:
 
         self._intervals.clear()
 
+    def merge(
+        self,
+        other: "ChunkMap",
+    ) -> None:
+        """
+        Merge another ChunkMap into this ChunkMap.
+
+        The resulting ChunkMap contains the union of all
+        chunk ownership from both maps.
+        """
+
+        self._intervals = merge_intervals(
+            [
+                *self._intervals,
+                *other._intervals,
+            ]
+        )
+
+    def merged(
+        self,
+        other: "ChunkMap",
+       ) -> "ChunkMap":
+        """
+        Return a new ChunkMap containing the union of
+        this ChunkMap and another without modifying either.
+        """
+
+        merged = self.copy()
+        merged.merge(other)
+        return merged
+
+    @classmethod
+    def merge_all(
+        cls,
+        chunk_maps: list["ChunkMap"],
+    ) -> "ChunkMap":
+        """
+        Merge multiple ChunkMaps into a single ChunkMap.
+        """
+
+        merged = cls()
+
+        for chunk_map in chunk_maps:
+            merged.merge(chunk_map)
+
+        return merged
+    
+
+    
+    def extend(
+        self,
+        intervals: list[Interval],
+    ) -> None:
+        """
+        Merge a collection of intervals into this ChunkMap.
+        """
+
+        self._intervals = merge_intervals(
+            [
+                *self._intervals,
+                *intervals,
+            ]
+        )
+
     # --------------------------------------------------
     # Queries
     # --------------------------------------------------

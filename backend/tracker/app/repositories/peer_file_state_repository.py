@@ -67,16 +67,19 @@ class PeerFileStateRepository:
         )
 
     def get_by_file_id(
-        self,
-        file_id: int,
-    ) -> list[PeerFileState]:
-
+    self,
+    file_id: int,
+    ):
+        
         return (
-            self.db.query(PeerFileState)
-            .filter(
-                PeerFileState.file_id == file_id
-            )
-            .all()
+        self.db.query(PeerFileState)
+        .filter(
+            PeerFileState.file_id == file_id
+        )
+        .order_by(
+            PeerFileState.owned_chunk_count.desc()
+        )
+        .all()
         )
 
     # ---------------------------------------------------------
