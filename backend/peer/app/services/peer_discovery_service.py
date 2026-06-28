@@ -1,44 +1,34 @@
-from api.discovery_api import (
-    DiscoveryAPI
-)
+import os
 
-from services.peer_identity_service import (
-    PeerIdentityService
-)
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
-class PeerDiscoveryService:
+class DiscoveryAPI:
+    """
+    Client for the Tracker Swarm Discovery API.
+    """
 
-    @staticmethod
-    def get_available_peers():
+    BASE_URL = os.getenv("TRACKER_URL")
 
-        peers = (
-            DiscoveryAPI
-            .get_peers()
+    @classmethod
+    def discover_swarm(
+        cls,
+        file_hash: str,
+    ) -> dict:
+        """
+        Discover the swarm for a specific file.
+
+        Returns the complete Swarm Discovery response
+        from the tracker.
+        """
+
+        response = requests.get(
+            f"{cls.BASE_URL}/swarms/{file_hash}"
         )
 
-        identity = (
-            PeerIdentityService
-            .get_or_create_identity()
-        )
+        response.raise_for_status()
 
-        current_peer_id = (
-            identity["peer_id"]
-        )
-
-        return [
-
-            peer
-
-            for peer in peers
-
-            if (
-                peer["peer_id"]
-                != current_peer_id
-
-                and
-
-                peer["status"]
-                == "online"
-            )
-        ]
+        return response.json()

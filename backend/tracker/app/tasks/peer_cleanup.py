@@ -7,6 +7,7 @@ from app.services.peer_service import PeerService
 async def cleanup_inactive_peers():
 
     while True:
+        print("Cleaning up inactive peers...")
 
         db = SessionLocal()
 
