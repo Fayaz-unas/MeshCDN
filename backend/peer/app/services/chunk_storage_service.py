@@ -1,6 +1,6 @@
 from pathlib import Path
 import logging
-
+import shutil
 
 logger = logging.getLogger(
     __name__
@@ -134,3 +134,108 @@ class ChunkStorageService:
                 chunk_index
             ).exists()
         )
+    
+
+
+
+    @classmethod
+    def get_chunks_directory(
+        cls,
+        file_hash: str,
+    ) -> Path:
+
+        return (
+            cls.get_file_directory(
+                file_hash
+            )
+            /
+            "chunks"
+        )
+
+    @classmethod
+    def get_downloaded_chunk_count(
+        cls,
+        file_hash: str,
+    ) -> int:
+
+        chunks_directory = (
+            cls.get_chunks_directory(
+                file_hash
+            )
+        )
+
+        if not chunks_directory.exists():
+
+            return 0
+
+        return len(
+            list(
+                chunks_directory.glob(
+                    "*.chunk"
+                )
+            )
+        )
+
+    @classmethod
+    def has_all_chunks(
+        cls,
+        file_hash: str,
+        total_chunks: int,
+    ) -> bool:
+
+        return (
+
+            cls.get_downloaded_chunk_count(
+                file_hash
+            )
+
+            ==
+
+            total_chunks
+
+        )
+
+    @classmethod
+    def delete_partial_download(
+        cls,
+        file_hash: str,
+    ) -> None:
+
+        directory = (
+            cls.get_file_directory(
+                file_hash
+            )
+        )
+
+        if directory.exists():
+
+            shutil.rmtree(
+                directory,
+                ignore_errors=True,
+            )
+
+    @classmethod
+    def get_storage_usage(
+        cls,
+        file_hash: str,
+    ) -> int:
+
+        directory = (
+            cls.get_file_directory(
+                file_hash
+            )
+        )
+
+        if not directory.exists():
+
+            return 0
+
+        total = 0
+
+        for file in directory.rglob("*"):
+
+            if file.is_file():
+
+                total += file.stat().st_size
+
+        return total

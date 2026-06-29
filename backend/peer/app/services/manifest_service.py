@@ -203,3 +203,31 @@ class ManifestService:
 
             chunks=chunks,
         )
+    @classmethod
+    def from_swarm(
+        cls,
+        swarm: dict,
+    ) -> Manifest:
+        
+        file = swarm["file"]
+
+        return Manifest(
+            file_hash=file["file_hash"],
+
+            manifest_hash=file["manifest_hash"],
+
+            file_name=file["file_name"],
+
+            file_size_bytes=file["file_size"],
+
+            chunk_size_bytes=file["chunk_size"],
+
+            total_chunks=file["total_chunks"],
+
+            mime_type=file["mime_type"],
+            created_at=datetime.utcnow(),
+
+
+           chunks=[],
+
+       )

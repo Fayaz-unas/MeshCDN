@@ -4,7 +4,11 @@ import logging
 from services.chunk_storage_service import (
     ChunkStorageService
 )
+import hashlib
 
+from services.hash_service import (
+    HashService
+)
 logger = logging.getLogger(
     __name__
 )
@@ -64,3 +68,58 @@ class FileReconstructionService:
             )
 
             raise
+
+
+    @classmethod
+    def reconstruct_to_downloads(
+        cls,
+        file_hash: str,
+        total_chunks: int,
+        file_name: str,
+    ) -> Path:
+
+        downloads = Path(
+            "downloads"
+        )
+
+        downloads.mkdir(
+            exist_ok=True
+        )
+
+        output = (
+            downloads
+            /
+            file_name
+        )
+
+        return cls.reconstruct_file(
+
+            file_hash=
+            file_hash,
+
+            total_chunks=
+            total_chunks,
+
+            output_path=
+            str(output)
+
+        )
+
+    @classmethod
+    def verify_integrity(
+        cls,
+        file_path: Path,
+        expected_hash: str,
+    ) -> bool:
+
+        calculated = (
+            HashService.hash_file(
+                str(file_path)
+            )
+        )
+
+        return (
+            calculated
+            ==
+            expected_hash
+        )

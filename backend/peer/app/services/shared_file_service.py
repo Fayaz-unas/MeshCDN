@@ -77,9 +77,33 @@ class SharedFileService:
 
         logger.info(
             "Registered shared file: %s",
-            file_metadata.file_name,
-        )
+            manifest.file_name,
+       )
 
+    # ---------------------------------------------------------
+    # Register Downloaded File
+    # ---------------------------------------------------------
+
+    def register_downloaded_file(
+        self,
+        *,
+        file_hash: str,
+        manifest: Manifest,
+        file_metadata: FileMetadata | None = None,
+        chunks: list[ChunkMetadata] | None = None,
+    ) -> None:
+        
+        self.register_file(
+        file_hash=file_hash,
+        manifest=manifest,
+        file_metadata=file_metadata,
+        chunks=chunks,
+    )
+        
+        logger.info(
+        "Registered downloaded file: %s",
+        manifest.file_name,
+        )
     # ---------------------------------------------------------
     # Unregister
     # ---------------------------------------------------------
@@ -194,8 +218,16 @@ class SharedFileService:
     def get_all_files(
         self,
     ) -> dict:
+        """
+        Get a copy of all shared files.
 
-        return self._shared_files
+        Returns a copy to prevent external modification
+        of the internal registry.
+        """
+
+        return dict(
+            self._shared_files
+        )
 
     def total_shared_files(
         self,

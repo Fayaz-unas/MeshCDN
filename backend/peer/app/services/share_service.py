@@ -1,5 +1,4 @@
 import logging
-import shutil
 
 from models.chunk_metadata import ChunkMetadata
 from models.manifest import Manifest
@@ -57,26 +56,28 @@ class ShareService:
             file_path,
         )
 
-        file_metadata = FileService.register_file(
-            file_path
-        )
-
-        file_hash = HashService.hash_file(
-            file_metadata.file_path
-        )
-
-        if self.shared_files.has_file(
-            file_hash
-        ):
-            raise ValueError(
-                "File is already shared."
-            )
-
-        chunks = ChunkService.create_chunks(
-            file_metadata
-        )
+        file_hash = None
 
         try:
+
+            file_metadata = FileService.register_file(
+                file_path
+            )
+
+            file_hash = HashService.hash_file(
+                file_metadata.file_path
+            )
+
+            if self.shared_files.has_file(
+                file_hash
+            ):
+                raise ValueError(
+                    "File is already shared."
+                )
+
+            chunks = ChunkService.create_chunks(
+                file_metadata
+            )
 
             self._store_chunks(
                 file_metadata.file_path,
@@ -160,9 +161,10 @@ class ShareService:
                 "Share workflow failed."
             )
 
-            self._rollback(
-                file_hash
-            )
+            if file_hash:
+                self._rollback(
+                    file_hash
+                )
 
             raise
 
@@ -287,19 +289,9 @@ class ShareService:
 
         try:
 
-            directory = (
-                ChunkStorageService
-                .get_file_directory(
-                    file_hash
-                )
+            ChunkStorageService.delete_partial_download(
+                file_hash
             )
-
-            if directory.exists():
-
-                shutil.rmtree(
-                    directory,
-                    ignore_errors=True,
-                )
 
         except Exception:
 
