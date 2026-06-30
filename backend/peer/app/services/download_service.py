@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 
 from api.discovery_api import DiscoveryAPI
@@ -34,6 +35,7 @@ from services.shared_file_service import (
 
 logger = logging.getLogger(__name__)
 
+ACTIVE_DOWNLOADS = {}
 
 class DownloadService:
     """
@@ -82,6 +84,17 @@ class DownloadService:
             manifest = ManifestService.from_swarm(
                 swarm
             )
+            
+            ACTIVE_DOWNLOADS[file_hash] = {
+                "progress": 0,
+                "total_chunks": manifest.total_chunks,
+                "downloaded_chunks": 0,
+                "chunk_size": manifest.chunk_size,
+                "peers": len(swarm.get("peers", [])),
+                "speed": 0,
+                "last_chunk_time": time.time(),
+                "control": "running",
+            }
 
             peer = self._select_peer(
                 swarm
@@ -141,6 +154,10 @@ class DownloadService:
                 )
 
             raise
+            
+        finally:
+            if file_hash in ACTIVE_DOWNLOADS:
+                del ACTIVE_DOWNLOADS[file_hash]
 
     # ---------------------------------------------------------
     # Discovery
@@ -276,6 +293,15 @@ class DownloadService:
             manifest.total_chunks
         ):
 
+            # Handle Pause / Cancel
+            control = ACTIVE_DOWNLOADS.get(manifest.file_hash, {}).get("control", "running")
+            if control == "cancel":
+                logger.info(f"Download {manifest.file_hash} cancelled by user.")
+                raise RuntimeError("Download cancelled by user.")
+                
+            while ACTIVE_DOWNLOADS.get(manifest.file_hash, {}).get("control") == "pause":
+                time.sleep(0.5)
+
             #
             # Resume support
             #
@@ -335,6 +361,24 @@ class DownloadService:
                     f"chunk {chunk_index}"
 
                 )
+                
+            now = time.time()
+            elapsed = now - ACTIVE_DOWNLOADS[manifest.file_hash]["last_chunk_time"]
+            
+            ACTIVE_DOWNLOADS[manifest.file_hash]["downloaded_chunks"] += 1
+            ACTIVE_DOWNLOADS[manifest.file_hash]["progress"] = (
+                ACTIVE_DOWNLOADS[manifest.file_hash]["downloaded_chunks"] / manifest.total_chunks
+            ) * 100
+            
+            if elapsed > 0:
+                current_speed = manifest.chunk_size / elapsed
+                old_speed = ACTIVE_DOWNLOADS[manifest.file_hash]["speed"]
+                if old_speed == 0:
+                    ACTIVE_DOWNLOADS[manifest.file_hash]["speed"] = current_speed
+                else:
+                    ACTIVE_DOWNLOADS[manifest.file_hash]["speed"] = (old_speed * 0.7) + (current_speed * 0.3)
+                    
+            ACTIVE_DOWNLOADS[manifest.file_hash]["last_chunk_time"] = now
 
         if (
 
