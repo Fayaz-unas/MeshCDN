@@ -20,7 +20,7 @@ export default function Dashboard() {
   const { state } = useApp();
 
   const speedData = useMemo(() => {
-    return state.speedHistory.length > 0 ? state.speedHistory : generateSpeedHistory(60);
+    return state.speedHistory || [];
   }, [state.speedHistory]);
 
   const onlinePeersCount = state.peers.filter(p => p.status === 'online').length;

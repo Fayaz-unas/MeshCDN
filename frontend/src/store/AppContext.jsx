@@ -41,7 +41,7 @@ const initialState = {
     maxDownloadSpeed: 0,
     chunkSize: 1048576,
     autoStart: true,
-    darkMode: true,
+    darkMode: false,
     developerMode: false,
   },
 

@@ -12,12 +12,7 @@ const statusConfig = {
   error:       { label: 'Error',       badge: 'danger', icon: AlertCircle },
 };
 
-const demoDownloads = [
-  { id: 'd1', fileName: 'ubuntu-24.04-desktop.iso', fileHash: '4d226e9a77f01753...', progress: 67, speed: 2400000, peers: 4, eta: 754, status: 'downloading', startedAt: Date.now() - 300000 },
-  { id: 'd2', fileName: 'project-files.zip', fileHash: 'b7ae48c1e9f23456...', progress: 100, speed: 0, peers: 0, eta: 0, status: 'completed', startedAt: Date.now() - 600000 },
-  { id: 'd3', fileName: 'dataset-v2.tar.gz', fileHash: 'f1a2b3c4d5e6f789...', progress: 23, speed: 890000, peers: 2, eta: 2700, status: 'downloading', startedAt: Date.now() - 120000 },
-  { id: 'd4', fileName: 'presentation.pptx', fileHash: 'aabb112233445566...', progress: 0, speed: 0, peers: 0, eta: 0, status: 'connecting', startedAt: Date.now() - 5000 },
-];
+
 
 const tabs = [
   { key: 'all',       label: 'All' },
@@ -32,7 +27,7 @@ export default function Downloads() {
   const [showModal, setShowModal] = useState(false);
   const [hashInput, setHashInput] = useState('');
 
-  const allDownloads = state.downloads.length > 0 ? state.downloads : demoDownloads;
+  const allDownloads = state.downloads || [];
 
   // Filter by tab
   const filteredDownloads = allDownloads.filter((d) => {

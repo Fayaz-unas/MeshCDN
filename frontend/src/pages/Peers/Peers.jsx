@@ -18,14 +18,7 @@ export default function Peers() {
   const [filter, setFilter] = useState('all');
   const [selectedPeer, setSelectedPeer] = useState(null);
 
-  const demoPeers = [
-    { peer_id: 'peer_a1b2c3d4e5f6', installation_id: 'inst_abc123def456', ip_address: '192.168.1.5', port: 5000, status: 'online', created_at: '2026-06-30T08:00:00', last_seen: '2026-06-30T10:30:00' },
-    { peer_id: 'peer_f7e8d9c0b1a2', installation_id: 'inst_def456ghi789', ip_address: '192.168.1.12', port: 5000, status: 'online', created_at: '2026-06-29T14:00:00', last_seen: '2026-06-30T10:29:45' },
-    { peer_id: 'peer_112233445566', installation_id: 'inst_ghi789jkl012', ip_address: '10.0.0.3', port: 5000, status: 'offline', created_at: '2026-06-28T09:00:00', last_seen: '2026-06-29T22:15:00' },
-    { peer_id: 'peer_aabbccddeeff', installation_id: 'inst_mno345pqr678', ip_address: '172.16.0.8', port: 5000, status: 'online', created_at: '2026-06-27T11:30:00', last_seen: '2026-06-30T10:30:02' },
-  ];
-
-  const allPeers = state.peers.length > 0 ? state.peers : demoPeers;
+  const allPeers = state.peers || [];
   
   const filteredPeers = useMemo(() => {
     if (filter === 'all') return allPeers;

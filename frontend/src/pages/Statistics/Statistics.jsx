@@ -23,48 +23,40 @@ export default function Statistics() {
   const { state } = useApp();
 
   const speedData = useMemo(() => {
-    return state.speedHistory.length > 0 ? state.speedHistory : generateSpeedHistory(60);
+    return state.speedHistory || [];
   }, [state.speedHistory]);
 
   const storageData = useMemo(() => [
-    { name: 'Downloads', value: 12800000000 },
-    { name: 'Uploads', value: 8500000000 },
-    { name: 'Shared', value: 5200000000 }
-  ], []);
+    { name: 'Downloads', value: state.stats.totalDownloaded || 0 },
+    { name: 'Uploads', value: state.stats.totalUploaded || 0 },
+    { name: 'Shared', value: state.stats.storageUsed || 0 }
+  ], [state.stats]);
   
   const storageColors = ['#0070f3', '#111111', '#64748b'];
 
-  const networkActivityData = useMemo(() => [
-    { name: 'Mon', up: 120, down: 230 },
-    { name: 'Tue', up: 150, down: 210 },
-    { name: 'Wed', up: 200, down: 180 },
-    { name: 'Thu', up: 245, down: 189 },
-    { name: 'Fri', up: 210, down: 250 },
-    { name: 'Sat', up: 180, down: 300 },
-    { name: 'Sun', up: 190, down: 280 },
-  ], []);
+  const networkActivityData = useMemo(() => [], []);
 
   return (
     <div className="statistics-page">
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-card-icon green"><HardDrive size={18} /></div>
-          <div className="stat-card-value">{state.stats.filesShared || 24}</div>
+          <div className="stat-card-value">{state.stats.filesShared || 0}</div>
           <div className="stat-card-label">Files Shared</div>
         </div>
         <div className="stat-card">
           <div className="stat-card-icon blue"><Download size={18} /></div>
-          <div className="stat-card-value">{state.stats.filesDownloaded || 18}</div>
+          <div className="stat-card-value">{state.stats.filesDownloaded || 0}</div>
           <div className="stat-card-label">Files Downloaded</div>
         </div>
         <div className="stat-card">
           <div className="stat-card-icon purple"><TrendingUp size={18} /></div>
-          <div className="stat-card-value">{formatBytes(48500000000)}</div>
+          <div className="stat-card-value">{formatBytes(state.stats.totalUploaded || 0)}</div>
           <div className="stat-card-label">Total Uploaded</div>
         </div>
         <div className="stat-card">
           <div className="stat-card-icon yellow"><TrendingDown size={18} /></div>
-          <div className="stat-card-value">{formatBytes(34200000000)}</div>
+          <div className="stat-card-value">{formatBytes(state.stats.totalDownloaded || 0)}</div>
           <div className="stat-card-label">Total Downloaded</div>
         </div>
       </div>
@@ -166,41 +158,41 @@ export default function Statistics() {
           <div>
             <div className="lifetime-stat-row">
               <span className="detail-label">Files Shared</span>
-              <span className="detail-value">24</span>
+              <span className="detail-value">{state.stats.filesShared || 0}</span>
             </div>
             <div className="lifetime-stat-row">
               <span className="detail-label">Files Downloaded</span>
-              <span className="detail-value">18</span>
+              <span className="detail-value">{state.stats.filesDownloaded || 0}</span>
             </div>
             <div className="lifetime-stat-row">
               <span className="detail-label">Chunks Uploaded</span>
-              <span className="detail-value">1,247</span>
+              <span className="detail-value">{(state.stats.chunksUploaded || 0).toLocaleString()}</span>
             </div>
             <div className="lifetime-stat-row">
               <span className="detail-label">Chunks Downloaded</span>
-              <span className="detail-value">892</span>
+              <span className="detail-value">{(state.stats.chunksDownloaded || 0).toLocaleString()}</span>
             </div>
           </div>
           <div>
             <div className="lifetime-stat-row">
               <span className="detail-label">Total Data Uploaded</span>
-              <span className="detail-value">45.2 GB</span>
+              <span className="detail-value">{formatBytes(state.stats.totalUploaded || 0)}</span>
             </div>
             <div className="lifetime-stat-row">
               <span className="detail-label">Total Data Downloaded</span>
-              <span className="detail-value">32.1 GB</span>
+              <span className="detail-value">{formatBytes(state.stats.totalDownloaded || 0)}</span>
             </div>
             <div className="lifetime-stat-row">
               <span className="detail-label">Average Download Speed</span>
-              <span className="detail-value">4.2 MB/s</span>
+              <span className="detail-value">{formatSpeed(state.downloadSpeed || 0)}</span>
             </div>
             <div className="lifetime-stat-row">
               <span className="detail-label">Average Upload Speed</span>
-              <span className="detail-value">2.8 MB/s</span>
+              <span className="detail-value">{formatSpeed(state.uploadSpeed || 0)}</span>
             </div>
             <div className="lifetime-stat-row">
               <span className="detail-label">Uptime</span>
-              <span className="detail-value">47h 23m</span>
+              <span className="detail-value">Live</span>
             </div>
           </div>
         </div>

@@ -12,13 +12,7 @@ export default function Files() {
   const [contextMenu, setContextMenu] = useState(null);
   const fileInputRef = useRef(null);
 
-  const demoFiles = [
-    { id: 1, file_hash: '4d226e9a77f017539080e27c4e4a3c5e112e4a1db37a0d', file_name: 'movie.mp4', file_size: 2254857830, total_chunks: 2150, chunk_size: 1048576, mime_type: 'video/mp4', is_active: true, created_at: new Date().toISOString() },
-    { id: 2, file_hash: 'b7ae48c1e9f234567890abcdef123456789abcdef01234', file_name: 'ubuntu-24.04.iso', file_size: 5153960755, total_chunks: 4916, chunk_size: 1048576, mime_type: 'application/octet-stream', is_active: true, created_at: new Date().toISOString() },
-    { id: 3, file_hash: 'f1a2b3c4d5e6f7890123456789abcdef0123456789abcd', file_name: 'report.pdf', file_size: 12582912, total_chunks: 12, chunk_size: 1048576, mime_type: 'application/pdf', is_active: true, created_at: new Date().toISOString() },
-  ];
-
-  const allFiles = state.files.length > 0 ? state.files : demoFiles;
+  const allFiles = state.files || [];
   
   const filteredFiles = allFiles.filter(f => 
     f.file_name?.toLowerCase().includes((state.searchQuery || '').toLowerCase())
@@ -96,6 +90,34 @@ export default function Files() {
           style={{ display: 'none' }} 
           onChange={handleFileSelect}
         />
+        <div style={{ marginTop: '1rem', width: '100%', maxWidth: '500px', display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
+          <input 
+            id="manual-path-input"
+            type="text" 
+            placeholder="Or enter absolute file path (Browser testing)..."
+            className="input"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.target.value) {
+                shareFile(e.target.value.replace(/^"|"$/g, ''));
+                e.target.value = '';
+              }
+            }}
+            style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+          />
+          <button 
+            className="btn btn-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              const input = document.getElementById('manual-path-input');
+              if (input && input.value) {
+                shareFile(input.value.replace(/^"|"$/g, ''));
+                input.value = '';
+              }
+            }}
+          >
+            Share Path
+          </button>
+        </div>
       </div>
 
       <div className="files-grid mt-md">
