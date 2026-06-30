@@ -200,8 +200,8 @@ a:hover {
 }
 
 .sidebar-brand-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--bg-primary);
   display: flex;
@@ -214,7 +214,7 @@ a:hover {
 }
 
 .sidebar-brand-text h1 {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.3px;
   color: var(--text-primary);
@@ -1465,4 +1465,89 @@ a:hover {
 .detail-value.mono {
   font-family: var(--font-mono);
   font-size: 12px;
+}
+
+/* ============================================
+   Responsive Layout
+   ============================================ */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .sidebar {
+    width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 16px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .sidebar-header {
+    padding: 0;
+    margin-bottom: 0;
+  }
+  
+  .sidebar-nav {
+    flex-direction: row;
+    padding: 0;
+    margin-left: auto;
+    gap: 8px;
+    overflow-x: auto;
+  }
+  
+  .nav-item {
+    padding: 8px 12px;
+    margin-bottom: 0;
+  }
+  
+  .nav-item span {
+    display: none;
+  }
+  
+  .main-header {
+    padding: 12px 16px;
+    height: auto;
+    min-height: 60px;
+  }
+  
+  .header-search {
+    width: 100%;
+  }
+  
+  .page-content {
+    padding: 16px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-search input {
+    font-size: 13px;
+    padding-left: 36px;
+  }
+  
+  .sidebar-brand-text h1 {
+    font-size: 20px;
+  }
+  
+  .sidebar-brand-icon {
+    width: 36px;
+    height: 36px;
+  }
 }

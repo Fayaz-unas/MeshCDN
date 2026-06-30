@@ -182,9 +182,6 @@ export default function Downloads() {
             </div>
 
             <div className="modal-body">
-              <div className="modal-icon">
-                <Download />
-              </div>
               <div className="form-group">
                 <label className="form-label">File Hash</label>
                 <input

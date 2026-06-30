@@ -82,7 +82,7 @@ export default function Layout() {
         <div className="sidebar-header">
           <div className="sidebar-brand">
             <div className="sidebar-brand-icon">
-              <MeshLogo size={24} />
+              <MeshLogo size={32} />
             </div>
             <div className="sidebar-brand-text">
               <h1>MeshCDN</h1>

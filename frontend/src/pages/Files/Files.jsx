@@ -150,9 +150,6 @@ export default function Files() {
                     </td>
                     <td>
                       <div className="file-actions">
-                        <button className="btn btn-sm btn-ghost btn-icon" onClick={(e) => { e.stopPropagation(); setSelectedFile(file); }} title="View Details">
-                          <Eye />
-                        </button>
                         <button className="btn btn-sm btn-ghost btn-icon" onClick={(e) => handleCopyHash(file.file_hash, e)} title="Copy Hash">
                           <Copy />
                         </button>
@@ -235,9 +232,6 @@ export default function Files() {
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(e) => e.stopPropagation()}
         >
-          <button className="context-menu-item" onClick={() => { setSelectedFile(contextMenu.file); closeContextMenu(); }}>
-            <Eye /> Open Details
-          </button>
           <button className="context-menu-item" onClick={() => { handleCopyHash(contextMenu.file.file_hash); closeContextMenu(); }}>
             <Copy /> Copy Hash
           </button>
@@ -264,9 +258,6 @@ export default function Files() {
             </div>
 
             <div className="modal-body">
-              <div className="modal-icon">
-                <Upload />
-              </div>
               <div className="form-group">
                 <label className="form-label">Absolute File Path</label>
                 <input
