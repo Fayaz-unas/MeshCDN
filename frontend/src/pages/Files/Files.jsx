@@ -1,15 +1,17 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useApp } from '../../store/AppContext';
 import { formatBytes, truncateHash, getFileTypeInfo, copyToClipboard } from '../../utils/helpers';
-import { Upload, FolderOpen, Copy, StopCircle, Trash2, Eye, FileText, X, MoreVertical, ExternalLink, Search } from 'lucide-react';
+import { Upload, FolderOpen, Copy, StopCircle, Trash2, Eye, FileText, X, MoreVertical, ExternalLink, Search, Plus } from 'lucide-react';
 import './Files.css';
 
 export default function Files() {
   const { state, shareFile, stopSharing, deleteFile, addNotification, dispatch, ActionTypes } = useApp();
   
-  const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [pathInput, setPathInput] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
   const allFiles = state.files || [];
@@ -17,6 +19,13 @@ export default function Files() {
   const filteredFiles = allFiles.filter(f => 
     f.file_name?.toLowerCase().includes((state.searchQuery || '').toLowerCase())
   );
+
+  const handleShare = () => {
+    if (!pathInput.trim()) return;
+    shareFile(pathInput.trim().replace(/^"|"$/g, ''));
+    setPathInput('');
+    setShowModal(false);
+  };
 
   const onDragOver = (e) => {
     e.preventDefault();
@@ -71,7 +80,8 @@ export default function Files() {
   };
 
   return (
-    <div className="files-page">
+    <>
+      <div className="files-page">
       
 
       <div 
@@ -83,41 +93,22 @@ export default function Files() {
       >
         <Upload />
         <h3>Drop files here to share</h3>
-        <p>or click to browse your computer</p>
+        
+        <div style={{ marginTop: '24px', display: 'flex', gap: '16px', justifyContent: 'center' }} onClick={(e) => e.stopPropagation()}>
+          <button className="btn btn-secondary" onClick={() => fileInputRef.current?.click()}>
+            <FolderOpen size={16} /> Browse Local Files
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={16} /> Enter Absolute Path
+          </button>
+        </div>
+        
         <input 
           type="file" 
           ref={fileInputRef} 
           style={{ display: 'none' }} 
           onChange={handleFileSelect}
         />
-        <div style={{ marginTop: '1rem', width: '100%', maxWidth: '500px', display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
-          <input 
-            id="manual-path-input"
-            type="text" 
-            placeholder="Or enter absolute file path (Browser testing)..."
-            className="input"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.target.value) {
-                shareFile(e.target.value.replace(/^"|"$/g, ''));
-                e.target.value = '';
-              }
-            }}
-            style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-          />
-          <button 
-            className="btn btn-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              const input = document.getElementById('manual-path-input');
-              if (input && input.value) {
-                shareFile(input.value.replace(/^"|"$/g, ''));
-                input.value = '';
-              }
-            }}
-          >
-            Share Path
-          </button>
-        </div>
       </div>
 
       <div className="files-grid mt-md">
@@ -260,5 +251,55 @@ export default function Files() {
         </div>
       )}
     </div>
+
+      {/* Share Modal */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal download-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Share File</h2>
+              <button className="modal-close" onClick={() => setShowModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="modal-icon">
+                <Upload />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Absolute File Path</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. C:\Users\Name\Desktop\file.mp4"
+                  value={pathInput}
+                  onChange={(e) => setPathInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleShare()}
+                  autoFocus
+                />
+                <p className="form-hint">
+                  Enter the absolute path of the file on your local machine to share it with the network.
+                </p>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setShowModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleShare}
+                disabled={!pathInput.trim()}
+              >
+                <Upload size={16} />
+                Share
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

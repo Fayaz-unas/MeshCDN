@@ -64,7 +64,6 @@ export default function Peers() {
                 <th>IP Address</th>
                 <th>Port</th>
                 <th>Last Seen</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -86,11 +85,6 @@ export default function Peers() {
                   <td>{peer.ip_address}</td>
                   <td>{peer.port}</td>
                   <td>{formatRelativeTime(peer.last_seen)}</td>
-                  <td>
-                    <button className="btn btn-sm btn-ghost btn-icon" onClick={(e) => { e.stopPropagation(); setSelectedPeer(peer); }}>
-                      <Eye />
-                    </button>
-                  </td>
                 </tr>
               )) : (
                 <tr>

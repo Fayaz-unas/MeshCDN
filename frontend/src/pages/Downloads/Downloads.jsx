@@ -21,9 +21,9 @@ const tabs = [
 ];
 
 export default function Downloads() {
-  const { state, downloadFile, addNotification } = useApp();
+  const { state, downloadFile, pauseDownload, resumeDownload, cancelDownload, addNotification } = useApp();
 
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('active');
   const [showModal, setShowModal] = useState(false);
   const [hashInput, setHashInput] = useState('');
 
@@ -135,17 +135,17 @@ export default function Downloads() {
 
                 <div className="download-card-actions">
                   {download.status === 'downloading' && (
-                    <button className="btn btn-sm btn-ghost">
+                    <button className="btn btn-sm btn-ghost" onClick={() => pauseDownload(download.id, download.fileHash)}>
                       <Pause size={14} /> Pause
                     </button>
                   )}
                   {download.status === 'paused' && (
-                    <button className="btn btn-sm btn-ghost">
+                    <button className="btn btn-sm btn-ghost" onClick={() => resumeDownload(download.id, download.fileHash)}>
                       <Play size={14} /> Resume
                     </button>
                   )}
-                  {download.status !== 'completed' && (
-                    <button className="btn btn-sm btn-danger">
+                  {download.status !== 'completed' && download.status !== 'cancelled' && (
+                    <button className="btn btn-sm btn-danger" onClick={() => cancelDownload(download.id, download.fileHash)}>
                       <X size={14} /> Cancel
                     </button>
                   )}

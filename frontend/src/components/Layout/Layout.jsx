@@ -23,7 +23,6 @@ const navItems = [
   { path: '/files', icon: FolderOpen, label: 'Files' },
   { path: '/downloads', icon: Download, label: 'Downloads' },
   { path: '/peers', icon: Users, label: 'Peers' },
-  { path: '/statistics', icon: BarChart3, label: 'Statistics' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -75,14 +74,6 @@ export default function Layout() {
             >
               <item.icon />
               <span>{item.label}</span>
-              {item.path === '/downloads' && state.downloads.filter(d => d.status !== 'completed').length > 0 && (
-                <span className="nav-item-badge">
-                  {state.downloads.filter(d => d.status !== 'completed').length}
-                </span>
-              )}
-              {item.path === '/peers' && onlinePeers > 0 && (
-                <span className="nav-item-badge">{onlinePeers}</span>
-              )}
             </NavLink>
           ))}
         </nav>

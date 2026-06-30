@@ -239,8 +239,11 @@ export function AppProvider({ children }) {
   }, [addNotification, addActivity, refreshFiles]);
 
   const downloadFile = useCallback(async (fileHash) => {
+    let interval;
+    const id = Date.now();
     try {
-      const id = Date.now();
+      let currentProgress = 0;
+      
       dispatch({
         type: ActionTypes.ADD_DOWNLOAD,
         payload: {
@@ -255,20 +258,107 @@ export function AppProvider({ children }) {
         },
       });
       addActivity('info', `Download started`);
+
+      // Poll real progress from the backend while waiting for the blocking backend API
+      interval = setInterval(async () => {
+        const progressRes = await api.getDownloadProgress(fileHash);
+        if (progressRes && progressRes.data) {
+          const realProgress = progressRes.data.progress || 0;
+          const realSpeed = progressRes.data.speed || 0;
+          const realPeers = progressRes.data.peers || 1;
+          
+          dispatch({
+            type: ActionTypes.UPDATE_DOWNLOAD,
+            payload: { 
+              id, 
+              progress: Math.round(realProgress), 
+              status: 'downloading',
+              speed: realSpeed,
+              peers: realPeers,
+              eta: 'Downloading...'
+            },
+          });
+        }
+      }, 500);
+
       const result = await api.downloadFile(fileHash);
+      
+      clearInterval(interval);
       dispatch({
         type: ActionTypes.UPDATE_DOWNLOAD,
-        payload: { id, progress: 100, status: 'completed', eta: 'Done' },
+        payload: { id, progress: 100, status: 'completed', eta: 'Done', speed: 0 },
       });
+      
+      // Ask user where to save the file
+      if (result && result.data && result.data.file_name) {
+        try {
+          if ('showSaveFilePicker' in window) {
+            const handle = await window.showSaveFilePicker({
+              suggestedName: result.data.file_name
+            });
+            const writable = await handle.createWritable();
+            const response = await fetch(`http://localhost:5001/download/serve?file_name=${encodeURIComponent(result.data.file_name)}`);
+            await response.body.pipeTo(writable);
+          } else {
+            // Fallback for older browsers
+            window.open(`http://localhost:5001/download/serve?file_name=${encodeURIComponent(result.data.file_name)}`, '_blank');
+          }
+        } catch (e) {
+          console.log('User cancelled save or save failed', e);
+        }
+      }
+      
       addNotification('success', 'Download Complete', `File downloaded successfully`);
       addActivity('success', `Download completed`);
       await refreshFiles();
       return result;
     } catch (err) {
-      addNotification('error', 'Download Failed', err.message);
+      if (interval) clearInterval(interval);
+      if (err.message.toLowerCase().includes('cancel')) {
+        dispatch({
+          type: ActionTypes.UPDATE_DOWNLOAD,
+          payload: { id, status: 'cancelled', eta: 'Cancelled', speed: 0 },
+        });
+        addNotification('warning', 'Download Cancelled', 'The download was cancelled.');
+      } else {
+        dispatch({
+          type: ActionTypes.UPDATE_DOWNLOAD,
+          payload: { id, status: 'failed', eta: 'Failed', speed: 0 },
+        });
+        addNotification('error', 'Download Failed', err.message);
+      }
       throw err;
     }
   }, [addNotification, addActivity, refreshFiles]);
+
+  const pauseDownload = useCallback(async (id, fileHash) => {
+    try {
+      await api.pauseDownload(fileHash);
+      dispatch({ type: ActionTypes.UPDATE_DOWNLOAD, payload: { id, status: 'paused', speed: 0, eta: 'Paused' } });
+      addNotification('info', 'Download Paused', 'Download has been paused');
+    } catch (err) {
+      console.error(err);
+    }
+  }, [addNotification]);
+
+  const resumeDownload = useCallback(async (id, fileHash) => {
+    try {
+      await api.resumeDownload(fileHash);
+      dispatch({ type: ActionTypes.UPDATE_DOWNLOAD, payload: { id, status: 'downloading', eta: 'Resuming...' } });
+      addNotification('success', 'Download Resumed', 'Download has resumed');
+    } catch (err) {
+      console.error(err);
+    }
+  }, [addNotification]);
+
+  const cancelDownload = useCallback(async (id, fileHash) => {
+    try {
+      await api.cancelDownload(fileHash);
+      // State is updated by the catch block of downloadFile when the backend aborts
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
 
   const stopSharing = useCallback(async (fileHash) => {
     try {
@@ -317,6 +407,9 @@ export function AppProvider({ children }) {
     refreshAll,
     shareFile,
     downloadFile,
+    pauseDownload,
+    resumeDownload,
+    cancelDownload,
     stopSharing,
     deleteFile: deleteFileAction,
     updateSettings,

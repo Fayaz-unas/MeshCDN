@@ -90,6 +90,28 @@ class ApiService {
     return res.json();
   }
 
+  async getDownloadProgress(fileHash) {
+    try {
+      const res = await fetch(`${PEER_URL}/download/progress/${fileHash}`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  async pauseDownload(fileHash) {
+    await fetch(`${PEER_URL}/download/${fileHash}/pause`, { method: 'POST' });
+  }
+
+  async resumeDownload(fileHash) {
+    await fetch(`${PEER_URL}/download/${fileHash}/resume`, { method: 'POST' });
+  }
+
+  async cancelDownload(fileHash) {
+    await fetch(`${PEER_URL}/download/${fileHash}/cancel`, { method: 'POST' });
+  }
+
   // ─── Peer: Get Shared Files ────────────────────
   async getSharedFiles() {
     try {
