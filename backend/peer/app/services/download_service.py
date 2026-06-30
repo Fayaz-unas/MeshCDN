@@ -321,6 +321,11 @@ class DownloadService:
                     chunk_index,
 
                 )
+                
+                ACTIVE_DOWNLOADS[manifest.file_hash]["downloaded_chunks"] += 1
+                ACTIVE_DOWNLOADS[manifest.file_hash]["progress"] = (
+                    ACTIVE_DOWNLOADS[manifest.file_hash]["downloaded_chunks"] / manifest.total_chunks
+                ) * 100
 
                 continue
 

@@ -43,6 +43,18 @@ class FileReconstructionService:
                     total_chunks
                 ):
 
+                    from services.download_service import ACTIVE_DOWNLOADS
+                    import time
+                    
+                    # Handle pause/cancel during reconstruction
+                    control = ACTIVE_DOWNLOADS.get(file_hash, {}).get("control", "running")
+                    if control == "cancel":
+                        logger.info(f"Reconstruction {file_hash} cancelled by user.")
+                        raise RuntimeError("Download cancelled by user.")
+                        
+                    while ACTIVE_DOWNLOADS.get(file_hash, {}).get("control") == "pause":
+                        time.sleep(0.5)
+
                     chunk_data = (
                         ChunkStorageService.load_chunk(
                             file_hash,
@@ -53,6 +65,12 @@ class FileReconstructionService:
                     destination.write(
                         chunk_data
                     )
+                    
+                    # Update progress during reconstruction (we keep it at 100% or we can just say status is reconstructing)
+                    if file_hash in ACTIVE_DOWNLOADS:
+                        ACTIVE_DOWNLOADS[file_hash]["status"] = "reconstructing"
+                        # We can track reconstruction progress if we want, but letting UI know status is enough
+                        # ACTIVE_DOWNLOADS[file_hash]["progress"] = ((chunk_index + 1) / total_chunks) * 100
 
             logger.info(
                 f"File reconstructed: "

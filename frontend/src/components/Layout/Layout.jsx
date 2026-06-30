@@ -11,11 +11,11 @@ import {
   Search,
   Bell,
   HardDrive,
-  Hexagon,
+
   Sun,
   Moon,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { formatBytes } from '../../utils/helpers';
 
 const navItems = [
@@ -36,8 +36,36 @@ const pageInfo = {
   '/developer': { title: 'Developer', subtitle: 'Protocol internals & debugging' },
 };
 
+const MeshLogo = ({ size = 24 }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 32 32" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ filter: 'drop-shadow(0 0 8px rgba(67, 97, 238, 0.4))' }}
+  >
+    {/* Connections */}
+    <path d="M6 22L6 12L16 18L26 12L26 22" stroke="#4361ee" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M6 12L16 6L26 12" stroke="#4bc0c8" strokeWidth="1.5" strokeDasharray="2 3" strokeLinecap="round" />
+    <path d="M6 22L16 28L26 22" stroke="#4bc0c8" strokeWidth="1.5" strokeDasharray="2 3" strokeLinecap="round" />
+    <path d="M16 6L16 18" stroke="#4bc0c8" strokeWidth="1.5" strokeDasharray="2 3" strokeLinecap="round" />
+    <path d="M16 18L16 28" stroke="#4bc0c8" strokeWidth="1.5" strokeDasharray="2 3" strokeLinecap="round" />
+    
+    {/* Nodes */}
+    <circle cx="6" cy="22" r="3" fill="#4361ee" />
+    <circle cx="6" cy="12" r="3" fill="#4361ee" />
+    <circle cx="16" cy="18" r="3.5" fill="#4bc0c8" />
+    <circle cx="26" cy="12" r="3" fill="#4361ee" />
+    <circle cx="26" cy="22" r="3" fill="#4361ee" />
+    <circle cx="16" cy="6" r="2.5" fill="#4bc0c8" />
+    <circle cx="16" cy="28" r="2.5" fill="#4bc0c8" />
+  </svg>
+);
+
 export default function Layout() {
   const { state, dispatch, ActionTypes } = useApp();
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const currentPage = pageInfo[location.pathname] || { title: 'MeshCDN', subtitle: '' };
 
@@ -48,13 +76,13 @@ export default function Layout() {
   }, [state.settings.darkMode]);
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">
           <div className="sidebar-brand">
             <div className="sidebar-brand-icon">
-              <Hexagon size={20} />
+              <MeshLogo size={24} />
             </div>
             <div className="sidebar-brand-text">
               <h1>MeshCDN</h1>

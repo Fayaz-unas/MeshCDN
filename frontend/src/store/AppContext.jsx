@@ -266,6 +266,12 @@ export function AppProvider({ children }) {
           const realProgress = progressRes.data.progress || 0;
           const realSpeed = progressRes.data.speed || 0;
           const realPeers = progressRes.data.peers || 1;
+          const backendStatus = progressRes.data.status || 'downloading';
+          
+          let etaLabel = 'Downloading...';
+          if (backendStatus === 'reconstructing') {
+             etaLabel = 'Reconstructing file...';
+          }
           
           dispatch({
             type: ActionTypes.UPDATE_DOWNLOAD,
@@ -275,7 +281,7 @@ export function AppProvider({ children }) {
               status: 'downloading',
               speed: realSpeed,
               peers: realPeers,
-              eta: 'Downloading...'
+              eta: etaLabel
             },
           });
         }

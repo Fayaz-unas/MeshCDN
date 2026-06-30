@@ -80,7 +80,7 @@ export default function Dashboard() {
           <div className="card-header">
             <div className="card-title">Network Throughput</div>
           </div>
-          <div style={{ height: '300px' }}>
+          <div style={{ height: '220px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={speedData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <defs>
