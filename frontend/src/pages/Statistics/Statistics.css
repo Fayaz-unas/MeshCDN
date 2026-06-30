@@ -1,0 +1,272 @@
+/* ============================================
+   Statistics Page
+   Premium analytics dashboard
+   ============================================ */
+
+.statistics-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: stats-fade-in 0.5s ease-out;
+}
+
+@keyframes stats-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Stat Cards Grid ────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-card .stat-card-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.stat-card .stat-card-trend.up {
+  color: var(--accent-primary);
+}
+
+.stat-card .stat-card-trend.down {
+  color: var(--accent-danger);
+}
+
+.stat-card .stat-card-trend svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ─── Two Column Grid ────────────────────────── */
+.two-col-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* ─── Chart Card ─────────────────────────────── */
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all var(--transition-base);
+}
+
+.chart-card:hover {
+  border-color: var(--border-color-hover);
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.chart-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chart-card-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+}
+
+.chart-card-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(6, 214, 160, 0.1);
+  color: var(--accent-primary);
+}
+
+.chart-wrapper {
+  width: 100%;
+  height: 220px;
+}
+
+/* Pie chart layout */
+.pie-chart-layout {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.pie-chart-wrapper {
+  flex-shrink: 0;
+  width: 200px;
+  height: 200px;
+}
+
+.pie-chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.pie-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pie-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pie-legend-label {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.pie-legend-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ─── Lifetime Stats ─────────────────────────── */
+.lifetime-stats {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 24px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all var(--transition-base);
+}
+
+.lifetime-stats:hover {
+  border-color: var(--border-color-hover);
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.lifetime-stats-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.lifetime-stats-header svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent-primary);
+}
+
+.lifetime-stats-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lifetime-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 32px;
+}
+
+.lifetime-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.lifetime-stat-row:last-child,
+.lifetime-stat-row:nth-last-child(1) {
+  border-bottom: none;
+}
+
+/* Remove border from last item in each column */
+.lifetime-stats-grid .lifetime-stat-row:nth-child(4),
+.lifetime-stats-grid .lifetime-stat-row:nth-child(8) {
+  border-bottom: none;
+}
+
+.lifetime-stat-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.lifetime-stat-label svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+}
+
+.lifetime-stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Recharts overrides ─────────────────────── */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(67, 97, 238, 0.06);
+}
+
+.recharts-text {
+  font-family: var(--font-sans);
+}
+
+/* ─── Responsive ─────────────────────────────── */
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .two-col-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lifetime-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pie-chart-layout {
+    flex-direction: column;
+  }
+}

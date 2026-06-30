@@ -44,6 +44,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.agent
 
 # vercel
 .vercel
@@ -201,7 +202,7 @@ __pycache__/
 build/
 develop-eggs/
 dist/
-downloads/
+# downloads/
 eggs/
 .eggs/
 lib/
