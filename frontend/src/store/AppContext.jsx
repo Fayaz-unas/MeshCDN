@@ -1,6 +1,15 @@
 import { createContext, useContext, useReducer, useCallback, useRef, useEffect } from 'react';
 import { api } from '../services/api';
 
+// ─── LocalStorage Helper ─────────────────────────
+const loadSavedSettings = () => {
+  try {
+    const saved = localStorage.getItem('meshcdn_settings');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return {};
+};
+
 // ─── Initial State ───────────────────────────────
 const initialState = {
   // Connection Status
@@ -43,6 +52,8 @@ const initialState = {
     autoStart: true,
     darkMode: false,
     developerMode: false,
+    askBeforeDownload: true,
+    ...loadSavedSettings(),
   },
 
   // UI State
@@ -167,6 +178,14 @@ const AppContext = createContext(null);
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const notifIdRef = useRef(0);
+  const stateRef = useRef(state);
+
+  useEffect(() => {
+    stateRef.current = state;
+    try {
+      localStorage.setItem('meshcdn_settings', JSON.stringify(state.settings));
+    } catch (e) {}
+  }, [state]);
 
   // Notification helpers
   const addNotification = useCallback((type, title, message) => {
@@ -295,10 +314,11 @@ export function AppProvider({ children }) {
         payload: { id, progress: 100, status: 'completed', eta: 'Done', speed: 0 },
       });
       
-      // Ask user where to save the file
+      // Ask user where to save the file based on setting
       if (result && result.data && result.data.file_name) {
         try {
-          if ('showSaveFilePicker' in window) {
+          const ask = stateRef.current.settings.askBeforeDownload ?? true;
+          if (ask && 'showSaveFilePicker' in window) {
             const handle = await window.showSaveFilePicker({
               suggestedName: result.data.file_name
             });
@@ -306,8 +326,17 @@ export function AppProvider({ children }) {
             const response = await fetch(`http://localhost:5001/download/serve?file_name=${encodeURIComponent(result.data.file_name)}`);
             await response.body.pipeTo(writable);
           } else {
-            // Fallback for older browsers
-            window.open(`http://localhost:5001/download/serve?file_name=${encodeURIComponent(result.data.file_name)}`, '_blank');
+            // Save directly without asking or fallback for older browsers
+            const response = await fetch(`http://localhost:5001/download/serve?file_name=${encodeURIComponent(result.data.file_name)}`);
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = result.data.file_name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
           }
         } catch (e) {
           console.log('User cancelled save or save failed', e);

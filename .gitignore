@@ -405,3 +405,8 @@ pip-selfcheck.json
 
 #for testing
 peer_copy/
+
+# MeshCDN runtime directories
+storage/
+downloads/
+uploads/

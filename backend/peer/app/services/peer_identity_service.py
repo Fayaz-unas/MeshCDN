@@ -9,9 +9,21 @@ logger = logging.getLogger(__name__)
 
 class PeerIdentityService:
 
-    CONFIG_PATH = Path(
-        "config/peer.json"
-    )
+    @classmethod
+    def get_config_path(cls):
+        import sys
+        base_paths = [
+            Path(__file__).resolve().parent.parent / "config/peer.json",
+            Path("config/peer.json"),
+            Path("app/config/peer.json")
+        ]
+        if hasattr(sys, "_MEIPASS"):
+            base_paths.insert(0, Path(sys._MEIPASS) / "app/config/peer.json")
+            base_paths.insert(0, Path(sys._MEIPASS) / "config/peer.json")
+        for p in base_paths:
+            if p.exists():
+                return p
+        return Path(__file__).resolve().parent.parent / "config/peer.json"
 
     @staticmethod
     def generate_peer_id():
@@ -34,7 +46,8 @@ class PeerIdentityService:
         
         """Save peer identity to config file with error handling."""
         try:
-            cls.CONFIG_PATH.parent.mkdir(
+            target_path = cls.get_config_path()
+            target_path.parent.mkdir(
                 exist_ok=True,
                 parents=True
             )
@@ -49,7 +62,7 @@ class PeerIdentityService:
 
         try:
             with open(
-                cls.CONFIG_PATH,
+                target_path,
                 "w"
             ) as file:
 
@@ -84,13 +97,14 @@ class PeerIdentityService:
         cls
     ):
         """Load peer identity from config file with error handling."""
-        if not cls.CONFIG_PATH.exists():
+        target_path = cls.get_config_path()
+        if not target_path.exists():
             logger.info("Identity config file not found")
             return None
 
         try:
             with open(
-                cls.CONFIG_PATH,
+                target_path,
                 "r"
             ) as file:
                 identity = json.load(file)

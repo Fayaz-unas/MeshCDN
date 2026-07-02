@@ -14,6 +14,8 @@ export default function Files() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
+  const isElectron = typeof window !== 'undefined' && Boolean(window.electronAPI);
+
   const allFiles = state.files || [];
   
   const filteredFiles = allFiles.filter(f => 
@@ -27,29 +29,69 @@ export default function Files() {
     setShowModal(false);
   };
 
+  const getFilePath = (file) => {
+    if (isElectron && window.electronAPI && window.electronAPI.getPathForFile) {
+      const p = window.electronAPI.getPathForFile(file);
+      if (p) return p;
+    }
+    return file.path || file.name;
+  };
+
   const onDragOver = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
   };
 
-  const onDragLeave = () => {
+  const onDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
   };
 
   const onDrop = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      shareFile(file.path || file.name);
+      const filePath = getFilePath(file);
+      if (filePath) {
+        shareFile(filePath);
+      }
     }
   };
 
   const handleFileSelect = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      shareFile(file.path || file.name);
+      const filePath = getFilePath(file);
+      if (filePath) {
+        shareFile(filePath);
+      }
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleBrowseFile = async () => {
+    if (isElectron) {
+      const path = await window.electronAPI.selectFile();
+      if (path) {
+        shareFile(path);
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleModalBrowseFile = async () => {
+    if (isElectron) {
+      const path = await window.electronAPI.selectFile();
+      if (path) {
+        setPathInput(path);
+      }
+    } else {
+      fileInputRef.current?.click();
     }
   };
 
@@ -68,8 +110,18 @@ export default function Files() {
 
   useEffect(() => {
     document.addEventListener('click', closeContextMenu);
+    const preventGlobalDrag = (e) => {
+      if (!e.target.closest('.drop-zone') && !e.target.closest('.modal-content')) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('dragover', preventGlobalDrag);
+    window.addEventListener('drop', preventGlobalDrag);
+
     return () => {
       document.removeEventListener('click', closeContextMenu);
+      window.removeEventListener('dragover', preventGlobalDrag);
+      window.removeEventListener('drop', preventGlobalDrag);
     };
   }, [closeContextMenu]);
 
@@ -89,17 +141,17 @@ export default function Files() {
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={handleBrowseFile}
       >
         <Upload />
         <h3>Drop files here to share</h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
+          {isElectron ? 'Click anywhere or drop a file from Windows Explorer' : 'Click to select or drop a file'}
+        </p>
         
         <div style={{ marginTop: '24px', display: 'flex', gap: '16px', justifyContent: 'center' }} onClick={(e) => e.stopPropagation()}>
-          <button className="btn btn-secondary" onClick={() => fileInputRef.current?.click()}>
-            <FolderOpen size={16} /> Browse Local Files
-          </button>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            <Plus size={16} /> Enter Absolute Path
+            <Plus size={16} /> Add file
           </button>
         </div>
         
@@ -249,7 +301,7 @@ export default function Files() {
       {/* Share Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal download-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal download-modal modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">Share File</h2>
               <button className="modal-close" onClick={() => setShowModal(false)}>
@@ -257,18 +309,37 @@ export default function Files() {
               </button>
             </div>
 
-            <div className="modal-body">
+            <div 
+              className="modal-body"
+              onDragOver={onDragOver}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  const filePath = getFilePath(e.dataTransfer.files[0]);
+                  if (filePath) setPathInput(filePath);
+                }
+              }}
+            >
               <div className="form-group">
                 <label className="form-label">Absolute File Path</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="e.g. C:\Users\Name\Desktop\file.mp4"
-                  value={pathInput}
-                  onChange={(e) => setPathInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleShare()}
-                  autoFocus
-                />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. C:\Users\Name\Desktop\file.mp4"
+                    value={pathInput}
+                    onChange={(e) => setPathInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleShare()}
+                    autoFocus
+                    style={{ flex: 1 }}
+                  />
+                  {isElectron && (
+                    <button type="button" className="btn btn-secondary" onClick={handleModalBrowseFile} title="Browse file using OS native dialog">
+                      <FolderOpen size={16} /> Browse
+                    </button>
+                  )}
+                </div>
                 <p className="form-hint">
                   Enter the absolute path of the file on your local machine to share it with the network.
                 </p>

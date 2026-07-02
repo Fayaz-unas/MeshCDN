@@ -1,3 +1,8 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import logging
 import time
 import threading
@@ -65,11 +70,17 @@ def main():
         "Starting MeshCDN Peer..."
     )
 
-    response = (
-        RegistrationService.register()
-    )
-
-    logging.info(response)
+    max_retries = 15
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = RegistrationService.register()
+            logging.info(f"Registered with Tracker: {response}")
+            break
+        except Exception as e:
+            logging.warning(f"Tracker registration attempt {attempt}/{max_retries} failed: {e}. Retrying in 2 seconds...")
+            time.sleep(2)
+    else:
+        logging.error("Could not register with Tracker after 15 attempts. Starting Peer server in standalone mode...")
 
     HeartbeatService.start()
 

@@ -1,13 +1,46 @@
 {
-  "name": "frontend",
+  "name": "meshcdn-desktop",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:backend": "python ../build_backend.py",
+    "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:3000 && electron .\"",
+    "electron:build": "npm run build:backend && vite build && electron-builder"
+  },
+  "build": {
+    "appId": "com.meshcdn.desktop",
+    "productName": "MeshCDN",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "public/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "binaries",
+        "to": "binaries",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "icon": "public/icon.ico",
+      "target": ["portable", "nsis"]
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   },
   "dependencies": {
     "lucide-react": "^1.22.0",
@@ -20,7 +53,11 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "concurrently": "^10.0.3",
+    "electron": "^43.0.0",
+    "electron-builder": "^26.15.3",
     "oxlint": "^1.71.0",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "wait-on": "^9.0.10"
   }
 }
