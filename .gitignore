@@ -403,5 +403,18 @@ pip-selfcheck.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,react,nextjs,visualstudiocode,venv,node
 
-#for testing
+# MeshCDN runtime & test directories
 peer_copy/
+peercopy/
+storage/
+downloads/
+uploads/
+postgres_data/
+docker-data/
+
+# MeshCDN build outputs & binaries
+release/
+binaries/
+*.exe
+*.manifest
+*.spec

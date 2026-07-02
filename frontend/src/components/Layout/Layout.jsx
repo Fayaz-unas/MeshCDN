@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useApp } from '../../store/AppContext';
 import NotificationContainer from '../Notifications/NotificationContainer';
 import {
@@ -6,43 +6,51 @@ import {
   FolderOpen,
   Download,
   Users,
-  BarChart3,
   Settings,
   Search,
-  Bell,
-  HardDrive,
-  Hexagon,
   Sun,
   Moon,
 } from 'lucide-react';
 import { useEffect } from 'react';
-import { formatBytes } from '../../utils/helpers';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/files', icon: FolderOpen, label: 'Files' },
   { path: '/downloads', icon: Download, label: 'Downloads' },
   { path: '/peers', icon: Users, label: 'Peers' },
-  { path: '/statistics', icon: BarChart3, label: 'Statistics' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
-const pageInfo = {
-  '/': { title: 'Dashboard', subtitle: 'System overview & health' },
-  '/files': { title: 'Files', subtitle: 'Manage shared & downloaded files' },
-  '/downloads': { title: 'Downloads', subtitle: 'Active & completed transfers' },
-  '/peers': { title: 'Peers', subtitle: 'Connected network peers' },
-  '/statistics': { title: 'Statistics', subtitle: 'Network performance & metrics' },
-  '/settings': { title: 'Settings', subtitle: 'Application configuration' },
-  '/developer': { title: 'Developer', subtitle: 'Protocol internals & debugging' },
-};
+
+const MeshLogo = ({ size = 24 }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 32 32" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ filter: 'drop-shadow(0 0 8px rgba(67, 97, 238, 0.4))' }}
+  >
+    {/* Connections */}
+    <path d="M6 22L6 12L16 18L26 12L26 22" stroke="#4361ee" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M6 12L16 6L26 12" stroke="#4bc0c8" strokeWidth="1.5" strokeDasharray="2 3" strokeLinecap="round" />
+    <path d="M6 22L16 28L26 22" stroke="#4bc0c8" strokeWidth="1.5" strokeDasharray="2 3" strokeLinecap="round" />
+    <path d="M16 6L16 18" stroke="#4bc0c8" strokeWidth="1.5" strokeDasharray="2 3" strokeLinecap="round" />
+    <path d="M16 18L16 28" stroke="#4bc0c8" strokeWidth="1.5" strokeDasharray="2 3" strokeLinecap="round" />
+    
+    {/* Nodes */}
+    <circle cx="6" cy="22" r="3" fill="#4361ee" />
+    <circle cx="6" cy="12" r="3" fill="#4361ee" />
+    <circle cx="16" cy="18" r="3.5" fill="#4bc0c8" />
+    <circle cx="26" cy="12" r="3" fill="#4361ee" />
+    <circle cx="26" cy="22" r="3" fill="#4361ee" />
+    <circle cx="16" cy="6" r="2.5" fill="#4bc0c8" />
+    <circle cx="16" cy="28" r="2.5" fill="#4bc0c8" />
+  </svg>
+);
 
 export default function Layout() {
   const { state, dispatch, ActionTypes } = useApp();
-  const location = useLocation();
-  const currentPage = pageInfo[location.pathname] || { title: 'MeshCDN', subtitle: '' };
-
-  const onlinePeers = state.peers.filter((p) => p.status === 'online').length;
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.settings.darkMode ? 'dark' : 'light');
@@ -55,7 +63,7 @@ export default function Layout() {
         <div className="sidebar-header">
           <div className="sidebar-brand">
             <div className="sidebar-brand-icon">
-              <Hexagon size={20} />
+              <MeshLogo size={32} />
             </div>
             <div className="sidebar-brand-text">
               <h1>MeshCDN</h1>
@@ -75,14 +83,6 @@ export default function Layout() {
             >
               <item.icon />
               <span>{item.label}</span>
-              {item.path === '/downloads' && state.downloads.filter(d => d.status !== 'completed').length > 0 && (
-                <span className="nav-item-badge">
-                  {state.downloads.filter(d => d.status !== 'completed').length}
-                </span>
-              )}
-              {item.path === '/peers' && onlinePeers > 0 && (
-                <span className="nav-item-badge">{onlinePeers}</span>
-              )}
             </NavLink>
           ))}
         </nav>

@@ -1,52 +1,97 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useApp } from '../../store/AppContext';
 import { formatBytes, truncateHash, getFileTypeInfo, copyToClipboard } from '../../utils/helpers';
-import { Upload, FolderOpen, Copy, StopCircle, Trash2, Eye, FileText, X, MoreVertical, ExternalLink, Search } from 'lucide-react';
+import { Upload, FolderOpen, Copy, StopCircle, Trash2, X, Plus } from 'lucide-react';
 import './Files.css';
 
 export default function Files() {
-  const { state, shareFile, stopSharing, deleteFile, addNotification, dispatch, ActionTypes } = useApp();
+  const { state, shareFile, stopSharing, deleteFile, addNotification } = useApp();
   
-  const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [pathInput, setPathInput] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
-  const demoFiles = [
-    { id: 1, file_hash: '4d226e9a77f017539080e27c4e4a3c5e112e4a1db37a0d', file_name: 'movie.mp4', file_size: 2254857830, total_chunks: 2150, chunk_size: 1048576, mime_type: 'video/mp4', is_active: true, created_at: new Date().toISOString() },
-    { id: 2, file_hash: 'b7ae48c1e9f234567890abcdef123456789abcdef01234', file_name: 'ubuntu-24.04.iso', file_size: 5153960755, total_chunks: 4916, chunk_size: 1048576, mime_type: 'application/octet-stream', is_active: true, created_at: new Date().toISOString() },
-    { id: 3, file_hash: 'f1a2b3c4d5e6f7890123456789abcdef0123456789abcd', file_name: 'report.pdf', file_size: 12582912, total_chunks: 12, chunk_size: 1048576, mime_type: 'application/pdf', is_active: true, created_at: new Date().toISOString() },
-  ];
+  const isElectron = typeof window !== 'undefined' && Boolean(window.electronAPI);
 
-  const allFiles = state.files.length > 0 ? state.files : demoFiles;
+  const allFiles = state.files || [];
   
   const filteredFiles = allFiles.filter(f => 
     f.file_name?.toLowerCase().includes((state.searchQuery || '').toLowerCase())
   );
 
+  const handleShare = () => {
+    if (!pathInput.trim()) return;
+    shareFile(pathInput.trim().replace(/^"|"$/g, ''));
+    setPathInput('');
+    setShowModal(false);
+  };
+
+  const getFilePath = (file) => {
+    if (isElectron && window.electronAPI && window.electronAPI.getPathForFile) {
+      const p = window.electronAPI.getPathForFile(file);
+      if (p) return p;
+    }
+    return file.path || file.name;
+  };
+
   const onDragOver = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
   };
 
-  const onDragLeave = () => {
+  const onDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
   };
 
   const onDrop = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      shareFile(file.path || file.name);
+      const filePath = getFilePath(file);
+      if (filePath) {
+        shareFile(filePath);
+      }
     }
   };
 
   const handleFileSelect = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      shareFile(file.path || file.name);
+      const filePath = getFilePath(file);
+      if (filePath) {
+        shareFile(filePath);
+      }
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleBrowseFile = async () => {
+    if (isElectron) {
+      const path = await window.electronAPI.selectFile();
+      if (path) {
+        shareFile(path);
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleModalBrowseFile = async () => {
+    if (isElectron) {
+      const path = await window.electronAPI.selectFile();
+      if (path) {
+        setPathInput(path);
+      }
+    } else {
+      fileInputRef.current?.click();
     }
   };
 
@@ -65,8 +110,18 @@ export default function Files() {
 
   useEffect(() => {
     document.addEventListener('click', closeContextMenu);
+    const preventGlobalDrag = (e) => {
+      if (!e.target.closest('.drop-zone') && !e.target.closest('.modal-content')) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('dragover', preventGlobalDrag);
+    window.addEventListener('drop', preventGlobalDrag);
+
     return () => {
       document.removeEventListener('click', closeContextMenu);
+      window.removeEventListener('dragover', preventGlobalDrag);
+      window.removeEventListener('drop', preventGlobalDrag);
     };
   }, [closeContextMenu]);
 
@@ -77,7 +132,8 @@ export default function Files() {
   };
 
   return (
-    <div className="files-page">
+    <>
+      <div className="files-page">
       
 
       <div 
@@ -85,11 +141,20 @@ export default function Files() {
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={handleBrowseFile}
       >
         <Upload />
         <h3>Drop files here to share</h3>
-        <p>or click to browse your computer</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
+          {isElectron ? 'Click anywhere or drop a file from Windows Explorer' : 'Click to select or drop a file'}
+        </p>
+        
+        <div style={{ marginTop: '24px', display: 'flex', gap: '16px', justifyContent: 'center' }} onClick={(e) => e.stopPropagation()}>
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={16} /> Add file
+          </button>
+        </div>
+        
         <input 
           type="file" 
           ref={fileInputRef} 
@@ -137,9 +202,6 @@ export default function Files() {
                     </td>
                     <td>
                       <div className="file-actions">
-                        <button className="btn btn-sm btn-ghost btn-icon" onClick={(e) => { e.stopPropagation(); setSelectedFile(file); }} title="View Details">
-                          <Eye />
-                        </button>
                         <button className="btn btn-sm btn-ghost btn-icon" onClick={(e) => handleCopyHash(file.file_hash, e)} title="Copy Hash">
                           <Copy />
                         </button>
@@ -222,9 +284,6 @@ export default function Files() {
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(e) => e.stopPropagation()}
         >
-          <button className="context-menu-item" onClick={() => { setSelectedFile(contextMenu.file); closeContextMenu(); }}>
-            <Eye /> Open Details
-          </button>
           <button className="context-menu-item" onClick={() => { handleCopyHash(contextMenu.file.file_hash); closeContextMenu(); }}>
             <Copy /> Copy Hash
           </button>
@@ -238,5 +297,71 @@ export default function Files() {
         </div>
       )}
     </div>
+
+      {/* Share Modal */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal download-modal modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Share File</h2>
+              <button className="modal-close" onClick={() => setShowModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div 
+              className="modal-body"
+              onDragOver={onDragOver}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  const filePath = getFilePath(e.dataTransfer.files[0]);
+                  if (filePath) setPathInput(filePath);
+                }
+              }}
+            >
+              <div className="form-group">
+                <label className="form-label">Absolute File Path</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. C:\Users\Name\Desktop\file.mp4"
+                    value={pathInput}
+                    onChange={(e) => setPathInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleShare()}
+                    autoFocus
+                    style={{ flex: 1 }}
+                  />
+                  {isElectron && (
+                    <button type="button" className="btn btn-secondary" onClick={handleModalBrowseFile} title="Browse file using OS native dialog">
+                      <FolderOpen size={16} /> Browse
+                    </button>
+                  )}
+                </div>
+                <p className="form-hint">
+                  Enter the absolute path of the file on your local machine to share it with the network.
+                </p>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setShowModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleShare}
+                disabled={!pathInput.trim()}
+              >
+                <Upload size={16} />
+                Share
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

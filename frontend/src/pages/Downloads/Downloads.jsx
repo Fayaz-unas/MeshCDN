@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../../store/AppContext';
-import { formatBytes, formatSpeed, formatDuration } from '../../utils/helpers';
+import { formatSpeed } from '../../utils/helpers';
 import { Download, Pause, Play, X, Plus, ArrowDown, CheckCircle, Clock, AlertCircle, Loader } from 'lucide-react';
 import './Downloads.css';
 
@@ -12,27 +12,14 @@ const statusConfig = {
   error:       { label: 'Error',       badge: 'danger', icon: AlertCircle },
 };
 
-const demoDownloads = [
-  { id: 'd1', fileName: 'ubuntu-24.04-desktop.iso', fileHash: '4d226e9a77f01753...', progress: 67, speed: 2400000, peers: 4, eta: 754, status: 'downloading', startedAt: Date.now() - 300000 },
-  { id: 'd2', fileName: 'project-files.zip', fileHash: 'b7ae48c1e9f23456...', progress: 100, speed: 0, peers: 0, eta: 0, status: 'completed', startedAt: Date.now() - 600000 },
-  { id: 'd3', fileName: 'dataset-v2.tar.gz', fileHash: 'f1a2b3c4d5e6f789...', progress: 23, speed: 890000, peers: 2, eta: 2700, status: 'downloading', startedAt: Date.now() - 120000 },
-  { id: 'd4', fileName: 'presentation.pptx', fileHash: 'aabb112233445566...', progress: 0, speed: 0, peers: 0, eta: 0, status: 'connecting', startedAt: Date.now() - 5000 },
-];
-
-const tabs = [
-  { key: 'all',       label: 'All' },
-  { key: 'active',    label: 'Active' },
-  { key: 'completed', label: 'Completed' },
-];
-
 export default function Downloads() {
-  const { state, downloadFile, addNotification } = useApp();
+  const { state, downloadFile, pauseDownload, resumeDownload, cancelDownload, addNotification } = useApp();
 
   const [activeTab, setActiveTab] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [hashInput, setHashInput] = useState('');
 
-  const allDownloads = state.downloads.length > 0 ? state.downloads : demoDownloads;
+  const allDownloads = state.downloads || [];
 
   // Filter by tab
   const filteredDownloads = allDownloads.filter((d) => {
@@ -134,23 +121,23 @@ export default function Downloads() {
                   <span>{download.peers} peers</span>
                   <span>
                     <Clock size={13} />
-                    {download.status === 'completed' ? 'Completed' : formatDuration(download.eta)}
+                    {download.status === 'completed' ? 'Completed' : download.eta}
                   </span>
                 </div>
 
                 <div className="download-card-actions">
                   {download.status === 'downloading' && (
-                    <button className="btn btn-sm btn-ghost">
+                    <button className="btn btn-sm btn-ghost" onClick={() => pauseDownload(download.id, download.fileHash)}>
                       <Pause size={14} /> Pause
                     </button>
                   )}
                   {download.status === 'paused' && (
-                    <button className="btn btn-sm btn-ghost">
+                    <button className="btn btn-sm btn-ghost" onClick={() => resumeDownload(download.id, download.fileHash)}>
                       <Play size={14} /> Resume
                     </button>
                   )}
-                  {download.status !== 'completed' && (
-                    <button className="btn btn-sm btn-danger">
+                  {download.status !== 'completed' && download.status !== 'cancelled' && (
+                    <button className="btn btn-sm btn-danger" onClick={() => cancelDownload(download.id, download.fileHash)}>
                       <X size={14} /> Cancel
                     </button>
                   )}
@@ -187,9 +174,6 @@ export default function Downloads() {
             </div>
 
             <div className="modal-body">
-              <div className="modal-icon">
-                <Download />
-              </div>
               <div className="form-group">
                 <label className="form-label">File Hash</label>
                 <input

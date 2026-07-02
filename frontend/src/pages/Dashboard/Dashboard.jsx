@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useApp } from '../../store/AppContext';
-import { formatBytes, formatSpeed, formatRelativeTime, generateSpeedHistory } from '../../utils/helpers';
+import { formatBytes, formatSpeed, generateSpeedHistory } from '../../utils/helpers';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Users, HardDrive, Download, Upload, CheckCircle, Info, AlertTriangle } from 'lucide-react';
+import { Users, Download, CheckCircle } from 'lucide-react';
 import './Dashboard.css';
 
 const CustomTooltip = ({ active, payload }) => {
@@ -20,7 +20,7 @@ export default function Dashboard() {
   const { state } = useApp();
 
   const speedData = useMemo(() => {
-    return state.speedHistory.length > 0 ? state.speedHistory : generateSpeedHistory(60);
+    return state.speedHistory?.length > 0 ? state.speedHistory : generateSpeedHistory(60);
   }, [state.speedHistory]);
 
   const onlinePeersCount = state.peers.filter(p => p.status === 'online').length;
@@ -36,37 +36,9 @@ export default function Dashboard() {
           <div className="stat-card-label">Online Peers</div>
         </div>
         <div className="stat-card">
-          <div className="stat-card-icon blue"><HardDrive size={18} /></div>
-          <div className="stat-card-value">{state.files.length}</div>
-          <div className="stat-card-label">Shared Files</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon purple"><Download size={18} /></div>
-          <div className="stat-card-value">{formatSpeed(state.downloadSpeed)}</div>
-          <div className="stat-card-label">Download Speed</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon yellow"><Upload size={18} /></div>
-          <div className="stat-card-value">{formatSpeed(state.uploadSpeed)}</div>
-          <div className="stat-card-label">Upload Speed</div>
-        </div>
-      </div>
-
-      <div className="stats-grid mt-md">
-        <div className="stat-card">
           <div className="stat-card-icon blue"><Download size={18} /></div>
           <div className="stat-card-value">{activeDownloadsCount}</div>
           <div className="stat-card-label">Active Downloads</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon purple"><Upload size={18} /></div>
-          <div className="stat-card-value">0</div>
-          <div className="stat-card-label">Active Uploads</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card-icon green"><HardDrive size={18} /></div>
-          <div className="stat-card-value">{formatBytes(state.stats.storageUsed)}</div>
-          <div className="stat-card-label">Storage Used</div>
         </div>
         <div className="stat-card">
           <div className="stat-card-icon yellow"><CheckCircle size={18} /></div>
@@ -74,13 +46,12 @@ export default function Dashboard() {
           <div className="stat-card-label">Total Downloaded</div>
         </div>
       </div>
-
       <div className="two-col-grid mt-lg" style={{ gridTemplateColumns: '1fr' }}>
         <div className="card dashboard-chart-card">
           <div className="card-header">
             <div className="card-title">Network Throughput</div>
           </div>
-          <div style={{ height: '300px' }}>
+          <div style={{ height: '220px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={speedData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <defs>

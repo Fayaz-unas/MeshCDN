@@ -1,29 +1,95 @@
 import { createContext, useContext, useReducer, useCallback, useRef, useEffect } from 'react';
-import { api } from '../services/api';
+
+// ─── LocalStorage Helper ─────────────────────────
+const loadSavedSettings = () => {
+  try {
+    const saved = localStorage.getItem('meshcdn_settings');
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return {};
+};
 
 // ─── Initial State ───────────────────────────────
 const initialState = {
   // Connection Status
-  trackerOnline: false,
-  peerOnline: false,
+  trackerOnline: true,
+  peerOnline: true,
 
   // Data
-  files: [],
-  peers: [],
+  files: [
+    {
+      id: 1,
+      file_name: 'ubuntu-24.04-desktop-amd64.iso',
+      file_hash: 'a1b2c3d4e5f6789012345678',
+      file_size: 5242880000,
+      total_chunks: 5000,
+      chunk_size: 1048576,
+      mime_type: 'application/x-iso9660-image',
+      created_at: new Date(Date.now() - 3600000 * 24).toISOString()
+    },
+    {
+      id: 2,
+      file_name: 'blender-4.1.0-windows-x64.zip',
+      file_hash: 'f6e5d4c3b2a1098765432109',
+      file_size: 314572800,
+      total_chunks: 300,
+      chunk_size: 1048576,
+      mime_type: 'application/zip',
+      created_at: new Date(Date.now() - 3600000 * 5).toISOString()
+    },
+    {
+      id: 3,
+      file_name: 'project-presentation-demo.mp4',
+      file_hash: '9876543210abcdef01234567',
+      file_size: 47185920,
+      total_chunks: 45,
+      chunk_size: 1048576,
+      mime_type: 'video/mp4',
+      created_at: new Date(Date.now() - 3600000 * 2).toISOString()
+    }
+  ],
+  peers: [
+    {
+      peer_id: 'node_us_east_01',
+      installation_id: 'inst_88a9c0d1',
+      status: 'online',
+      ip_address: '192.168.1.104',
+      port: 5001,
+      created_at: new Date(Date.now() - 86400000 * 10).toISOString(),
+      last_seen: new Date(Date.now() - 10000).toISOString()
+    },
+    {
+      peer_id: 'node_eu_central_04',
+      installation_id: 'inst_33b2e7f9',
+      status: 'online',
+      ip_address: '10.0.0.45',
+      port: 5002,
+      created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+      last_seen: new Date(Date.now() - 25000).toISOString()
+    },
+    {
+      peer_id: 'node_ap_south_02',
+      installation_id: 'inst_55c1a4b8',
+      status: 'offline',
+      ip_address: '172.16.0.88',
+      port: 5003,
+      created_at: new Date(Date.now() - 86400000 * 20).toISOString(),
+      last_seen: new Date(Date.now() - 3600000 * 4).toISOString()
+    }
+  ],
   downloads: [],
-  sharedFiles: [],
   activities: [],
   notifications: [],
 
   // Stats
   stats: {
-    totalUploaded: 0,
-    totalDownloaded: 0,
-    filesShared: 0,
-    filesDownloaded: 0,
-    chunksUploaded: 0,
-    chunksDownloaded: 0,
-    storageUsed: 0,
+    totalUploaded: 1258291200,
+    totalDownloaded: 4508876800,
+    filesShared: 3,
+    filesDownloaded: 12,
+    chunksUploaded: 1200,
+    chunksDownloaded: 4300,
+    storageUsed: 5604618240,
   },
 
   // Speed tracking
@@ -41,14 +107,14 @@ const initialState = {
     maxDownloadSpeed: 0,
     chunkSize: 1048576,
     autoStart: true,
-    darkMode: true,
+    darkMode: false,
     developerMode: false,
+    askBeforeDownload: true,
+    ...loadSavedSettings(),
   },
 
   // UI State
   searchQuery: '',
-  selectedFile: null,
-  selectedPeer: null,
 };
 
 // ─── Actions ─────────────────────────────────────
@@ -60,16 +126,12 @@ const ActionTypes = {
   ADD_DOWNLOAD: 'ADD_DOWNLOAD',
   UPDATE_DOWNLOAD: 'UPDATE_DOWNLOAD',
   REMOVE_DOWNLOAD: 'REMOVE_DOWNLOAD',
-  SET_SHARED_FILES: 'SET_SHARED_FILES',
   ADD_ACTIVITY: 'ADD_ACTIVITY',
   ADD_NOTIFICATION: 'ADD_NOTIFICATION',
   REMOVE_NOTIFICATION: 'REMOVE_NOTIFICATION',
-  UPDATE_STATS: 'UPDATE_STATS',
   UPDATE_SPEED: 'UPDATE_SPEED',
   UPDATE_SETTINGS: 'UPDATE_SETTINGS',
   SET_SEARCH_QUERY: 'SET_SEARCH_QUERY',
-  SET_SELECTED_FILE: 'SET_SELECTED_FILE',
-  SET_SELECTED_PEER: 'SET_SELECTED_PEER',
 };
 
 // ─── Reducer ─────────────────────────────────────
@@ -104,9 +166,6 @@ function appReducer(state, action) {
         downloads: state.downloads.filter((d) => d.id !== action.payload),
       };
 
-    case ActionTypes.SET_SHARED_FILES:
-      return { ...state, sharedFiles: action.payload };
-
     case ActionTypes.ADD_ACTIVITY:
       return {
         ...state,
@@ -124,9 +183,6 @@ function appReducer(state, action) {
         ...state,
         notifications: state.notifications.filter((n) => n.id !== action.payload),
       };
-
-    case ActionTypes.UPDATE_STATS:
-      return { ...state, stats: { ...state.stats, ...action.payload } };
 
     case ActionTypes.UPDATE_SPEED:
       return {
@@ -149,12 +205,6 @@ function appReducer(state, action) {
     case ActionTypes.SET_SEARCH_QUERY:
       return { ...state, searchQuery: action.payload };
 
-    case ActionTypes.SET_SELECTED_FILE:
-      return { ...state, selectedFile: action.payload };
-
-    case ActionTypes.SET_SELECTED_PEER:
-      return { ...state, selectedPeer: action.payload };
-
     default:
       return state;
   }
@@ -167,6 +217,14 @@ const AppContext = createContext(null);
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const notifIdRef = useRef(0);
+  const stateRef = useRef(state);
+
+  useEffect(() => {
+    stateRef.current = state;
+    try {
+      localStorage.setItem('meshcdn_settings', JSON.stringify(state.settings));
+    } catch {}
+  }, [state]);
 
   // Notification helpers
   const addNotification = useCallback((type, title, message) => {
@@ -192,116 +250,126 @@ export function AppProvider({ children }) {
     });
   }, []);
 
-  // Data fetching
-  const refreshStatus = useCallback(async () => {
-    const [tracker, peer] = await Promise.all([
-      api.getTrackerStatus(),
-      api.getPeerStatus(),
-    ]);
-    dispatch({ type: ActionTypes.SET_TRACKER_STATUS, payload: tracker.online });
-    dispatch({ type: ActionTypes.SET_PEER_STATUS, payload: peer.online });
+  // Standalone Status Refresh
+  const refreshStatus = useCallback(() => {
+    dispatch({ type: ActionTypes.SET_TRACKER_STATUS, payload: true });
+    dispatch({ type: ActionTypes.SET_PEER_STATUS, payload: true });
   }, []);
 
-  const refreshFiles = useCallback(async () => {
-    try {
-      const files = await api.getFiles();
-      dispatch({ type: ActionTypes.SET_FILES, payload: files });
-    } catch {
-      // silently fail if tracker is offline
-    }
-  }, []);
-
-  const refreshPeers = useCallback(async () => {
-    try {
-      const peers = await api.getPeers();
-      dispatch({ type: ActionTypes.SET_PEERS, payload: peers });
-    } catch {
-      // silently fail
-    }
-  }, []);
-
-  const refreshAll = useCallback(async () => {
-    await Promise.all([refreshStatus(), refreshFiles(), refreshPeers()]);
-  }, [refreshStatus, refreshFiles, refreshPeers]);
+  const refreshFiles = useCallback(() => {}, []);
+  const refreshPeers = useCallback(() => {}, []);
+  const refreshAll = useCallback(() => {
+    refreshStatus();
+  }, [refreshStatus]);
 
   // Actions
   const shareFile = useCallback(async (filePath) => {
-    try {
-      const result = await api.shareFile(filePath);
-      addNotification('success', 'File Shared', `Successfully shared file`);
-      addActivity('success', `Shared file`);
-      await refreshFiles();
-      return result;
-    } catch (err) {
-      addNotification('error', 'Share Failed', err.message);
-      throw err;
-    }
-  }, [addNotification, addActivity, refreshFiles]);
+    const fileName = filePath.split(/[\\/]/).pop() || filePath;
+    const newFile = {
+      id: Date.now(),
+      file_name: fileName,
+      file_hash: 'hash_' + Math.random().toString(36).substring(2, 10),
+      file_size: Math.floor(Math.random() * 50000000) + 1000000,
+      total_chunks: 10,
+      chunk_size: 1048576,
+      mime_type: 'application/octet-stream',
+      created_at: new Date().toISOString(),
+      path: filePath
+    };
+    dispatch({ type: ActionTypes.SET_FILES, payload: [newFile, ...stateRef.current.files] });
+    addNotification('success', 'File Shared', `Successfully shared file`);
+    addActivity('success', `Shared file`);
+    return { success: true, data: newFile };
+  }, [addNotification, addActivity]);
 
   const downloadFile = useCallback(async (fileHash) => {
-    try {
-      const id = Date.now();
-      dispatch({
-        type: ActionTypes.ADD_DOWNLOAD,
-        payload: {
-          id,
-          fileHash,
-          progress: 0,
-          speed: 0,
-          peers: 0,
-          eta: 'Calculating...',
-          status: 'connecting',
-          startedAt: Date.now(),
-        },
-      });
-      addActivity('info', `Download started`);
-      const result = await api.downloadFile(fileHash);
-      dispatch({
-        type: ActionTypes.UPDATE_DOWNLOAD,
-        payload: { id, progress: 100, status: 'completed', eta: 'Done' },
-      });
-      addNotification('success', 'Download Complete', `File downloaded successfully`);
-      addActivity('success', `Download completed`);
-      await refreshFiles();
-      return result;
-    } catch (err) {
-      addNotification('error', 'Download Failed', err.message);
-      throw err;
-    }
-  }, [addNotification, addActivity, refreshFiles]);
+    const id = Date.now();
+    const targetFile = stateRef.current.files.find(f => f.file_hash === fileHash);
+    const fileName = targetFile ? targetFile.file_name : `file_${fileHash.slice(0, 6)}.dat`;
+    
+    dispatch({
+      type: ActionTypes.ADD_DOWNLOAD,
+      payload: {
+        id,
+        fileHash,
+        fileName,
+        progress: 0,
+        speed: 1024 * 500,
+        peers: 3,
+        eta: '30s',
+        status: 'downloading',
+        startedAt: Date.now(),
+      },
+    });
+    addActivity('info', `Download started`);
 
-  const stopSharing = useCallback(async (fileHash) => {
-    try {
-      await api.stopSharing(fileHash);
-      addNotification('success', 'Stopped Sharing', 'File is no longer shared');
-      addActivity('info', 'Stopped sharing file');
-      await refreshFiles();
-    } catch (err) {
-      addNotification('error', 'Error', err.message);
-    }
-  }, [addNotification, addActivity, refreshFiles]);
+    const interval = setInterval(() => {
+      const currentDl = stateRef.current.downloads?.find((d) => d.id === id);
+      if (!currentDl || currentDl.status === 'cancelled' || currentDl.status === 'completed' || currentDl.status === 'failed' || currentDl.status === 'paused') {
+        if (currentDl?.status === 'cancelled' || currentDl?.status === 'completed' || currentDl?.status === 'failed') {
+          clearInterval(interval);
+        }
+        return;
+      }
 
-  const deleteFileAction = useCallback(async (fileHash) => {
-    try {
-      await api.deleteFile(fileHash);
-      addNotification('success', 'File Deleted', 'File removed from network');
-      addActivity('info', 'Deleted file');
-      await refreshFiles();
-    } catch (err) {
-      addNotification('error', 'Error', err.message);
-    }
-  }, [addNotification, addActivity, refreshFiles]);
+      const nextProgress = Math.min(100, (currentDl.progress || 0) + 20);
+      if (nextProgress >= 100) {
+        clearInterval(interval);
+        dispatch({
+          type: ActionTypes.UPDATE_DOWNLOAD,
+          payload: { id, progress: 100, status: 'completed', eta: 'Done', speed: 0 },
+        });
+        addNotification('success', 'Download Complete', `File downloaded successfully`);
+        addActivity('success', `Download completed`);
+      } else {
+        dispatch({
+          type: ActionTypes.UPDATE_DOWNLOAD,
+          payload: { id, progress: nextProgress, speed: 1024 * 600, eta: `${Math.round((100 - nextProgress) / 20 * 1)}s` },
+        });
+      }
+    }, 500);
+  }, [addNotification, addActivity]);
+
+  const pauseDownload = useCallback((id) => {
+    dispatch({ type: ActionTypes.UPDATE_DOWNLOAD, payload: { id, status: 'paused', speed: 0, eta: 'Paused' } });
+    addNotification('info', 'Download Paused', 'Download has been paused');
+  }, [addNotification]);
+
+  const resumeDownload = useCallback((id) => {
+    dispatch({ type: ActionTypes.UPDATE_DOWNLOAD, payload: { id, status: 'downloading', eta: 'Resuming...' } });
+    addNotification('success', 'Download Resumed', 'Download has resumed');
+  }, [addNotification]);
+
+  const cancelDownload = useCallback((id) => {
+    dispatch({
+      type: ActionTypes.UPDATE_DOWNLOAD,
+      payload: { id, status: 'cancelled', eta: 'Cancelled', speed: 0 },
+    });
+    addNotification('warning', 'Download Cancelled', 'The download was cancelled.');
+  }, [addNotification]);
+
+  const stopSharing = useCallback((fileHash) => {
+    addNotification('success', 'Stopped Sharing', 'File is no longer shared');
+    addActivity('info', 'Stopped sharing file');
+  }, [addNotification, addActivity]);
+
+  const deleteFileAction = useCallback((fileHash) => {
+    dispatch({
+      type: ActionTypes.SET_FILES,
+      payload: stateRef.current.files.filter(f => f.file_hash !== fileHash)
+    });
+    addNotification('success', 'File Deleted', 'File removed from network');
+    addActivity('info', 'Deleted file');
+  }, [addNotification, addActivity]);
 
   const updateSettings = useCallback((newSettings) => {
     dispatch({ type: ActionTypes.UPDATE_SETTINGS, payload: newSettings });
   }, []);
 
-  // Periodic refresh
+  // Initial refresh on mount
   useEffect(() => {
-    refreshAll();
-    const interval = setInterval(refreshAll, 10000);
-    return () => clearInterval(interval);
-  }, [refreshAll]);
+    refreshStatus();
+  }, [refreshStatus]);
 
   const value = {
     state,
@@ -317,6 +385,9 @@ export function AppProvider({ children }) {
     refreshAll,
     shareFile,
     downloadFile,
+    pauseDownload,
+    resumeDownload,
+    cancelDownload,
     stopSharing,
     deleteFile: deleteFileAction,
     updateSettings,
@@ -330,3 +401,4 @@ export function useApp() {
   if (!context) throw new Error('useApp must be used within AppProvider');
   return context;
 }
+
