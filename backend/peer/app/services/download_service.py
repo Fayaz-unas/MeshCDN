@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import dataclasses
+import hashlib
 import logging
 import time
 from pathlib import Path
@@ -7,7 +9,9 @@ from pathlib import Path
 from api.discovery_api import DiscoveryAPI
 from api.peer_file_state_api import PeerFileStateAPI
 
+from models.chunk_metadata import ChunkMetadata
 from models.manifest import Manifest
+from models.manifest_chunk import ManifestChunk
 
 from services.chunk_storage_service import (
     ChunkStorageService,
@@ -89,7 +93,7 @@ class DownloadService:
                 "progress": 0,
                 "total_chunks": manifest.total_chunks,
                 "downloaded_chunks": 0,
-                "chunk_size": manifest.chunk_size,
+                "chunk_size": manifest.chunk_size_bytes,
                 "peers": len(swarm.get("peers", [])),
                 "speed": 0,
                 "last_chunk_time": time.time(),
@@ -376,7 +380,7 @@ class DownloadService:
             ) * 100
             
             if elapsed > 0:
-                current_speed = manifest.chunk_size / elapsed
+                current_speed = manifest.chunk_size_bytes / elapsed
                 old_speed = ACTIVE_DOWNLOADS[manifest.file_hash]["speed"]
                 if old_speed == 0:
                     ACTIVE_DOWNLOADS[manifest.file_hash]["speed"] = current_speed
@@ -496,9 +500,38 @@ class DownloadService:
             "Registering downloaded file locally."
         )
 
+        chunks = []
+        manifest_chunks = []
+        for i in range(manifest.total_chunks):
+            data = ChunkStorageService.load_chunk(manifest.file_hash, i)
+            ch_hash = hashlib.sha256(data).hexdigest()
+            ch_size = len(data)
+            ch_offset = i * manifest.chunk_size_bytes
+            chunks.append(
+                ChunkMetadata(
+                    chunk_index=i,
+                    chunk_offset=ch_offset,
+                    chunk_size_bytes=ch_size,
+                    chunk_hash=ch_hash,
+                )
+            )
+            manifest_chunks.append(
+                ManifestChunk(
+                    chunk_index=i,
+                    chunk_hash=ch_hash,
+                    chunk_size_bytes=ch_size,
+                )
+            )
+
+        if not manifest.chunks:
+            manifest = dataclasses.replace(manifest, chunks=manifest_chunks)
+
+        ManifestService.save_manifest(manifest)
+
         self.shared_file_service.register_downloaded_file(
             file_hash=manifest.file_hash,
             manifest=manifest,
+            chunks=chunks,
         )
 
         logger.info(
