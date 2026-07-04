@@ -14,8 +14,9 @@ MeshCDN consists of three primary components that work in tandem:
    - The core Python daemon running on a user's machine.
    - It acts as both a TCP server (Port 5000) to communicate with other peers and exchange chunks, and a FastAPI REST server (Port 5001) providing an interface to the UI.
    - Handles file chunking, hashing, storage, and file reconstruction.
-3. **Frontend UI (Port 5173)**
-   - A rich, responsive React (Vite) dashboard built to run as a desktop UI.
+3. **Frontend UI (Port 3000 / Desktop App)**
+   - A rich, responsive React (Vite) dashboard wrapped with Electron for native desktop capabilities.
+   - Designed as a decoupled, standalone UI layer that can operate independently or interact with backend mesh nodes.
    - Displays real-time statistics, active downloads, and shared files.
 
 ## Prerequisites
@@ -25,7 +26,7 @@ MeshCDN consists of three primary components that work in tandem:
 
 ## How to Run
 
-To run MeshCDN locally, you need to spin up the three components in separate terminal windows.
+To run the full MeshCDN suite locally, you can start the components in separate terminal windows:
 
 ### 1. Start the Tracker
 ```bash
@@ -42,22 +43,31 @@ cd backend/peer
 python -m venv .venv
 # Activate venv (.venv\Scripts\activate on Windows)
 pip install -r requirements.txt
-pip install fastapi uvicorn pydantic # UI API Dependencies
 python app/main.py
 ```
 
 ### 3. Start the Frontend UI
+You can run the frontend in browser development mode or as a native Electron desktop application:
+
 ```bash
 cd frontend
 npm install
+
+# Option A: Run in Web Browser Mode (Vite Dev Server on Port 3000)
 npm run dev
+
+# Option B: Run as Desktop Electron App
+npm run electron:dev
+
+# Option C: Build Production Desktop Application
+npm run electron:build
 ```
 
 ## Important Note on Testing in Browser
 
 Because MeshCDN operates as a local daemon reading directly from your hard drive, it requires the **absolute file path** (e.g. `C:\Users\Me\Desktop\video.mp4`) to share a file. 
 
-If you are running the frontend in a standard web browser (Chrome, Edge, Firefox) rather than a bundled desktop wrapper (like Electron), the browser's security sandbox prevents it from reading absolute file paths via drag-and-drop or the file picker. 
+If you are running the frontend in a standard web browser (Chrome, Edge, Firefox) rather than the bundled Electron desktop wrapper, the browser's security sandbox prevents it from reading absolute file paths via drag-and-drop or the file picker. 
 
 **Workaround:** 
 On the `Files` page, use the dedicated text input box. **Paste the absolute file path directly into the input** and hit "Share Path". (On Windows, hold `Shift` + Right-Click the file, select "Copy as path", and paste it into the UI). 

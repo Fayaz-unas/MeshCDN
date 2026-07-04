@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../../store/AppContext';
-import { formatBytes, formatSpeed, formatDuration } from '../../utils/helpers';
+import { formatSpeed } from '../../utils/helpers';
 import { Download, Pause, Play, X, Plus, ArrowDown, CheckCircle, Clock, AlertCircle, Loader } from 'lucide-react';
 import './Downloads.css';
 
@@ -12,18 +12,10 @@ const statusConfig = {
   error:       { label: 'Error',       badge: 'danger', icon: AlertCircle },
 };
 
-
-
-const tabs = [
-  { key: 'all',       label: 'All' },
-  { key: 'active',    label: 'Active' },
-  { key: 'completed', label: 'Completed' },
-];
-
 export default function Downloads() {
   const { state, downloadFile, pauseDownload, resumeDownload, cancelDownload, addNotification } = useApp();
 
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [hashInput, setHashInput] = useState('');
 
@@ -129,7 +121,7 @@ export default function Downloads() {
                   <span>{download.peers} peers</span>
                   <span>
                     <Clock size={13} />
-                    {download.status === 'completed' ? 'Completed' : formatDuration(download.eta)}
+                    {download.status === 'completed' ? 'Completed' : download.eta}
                   </span>
                 </div>
 

@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useApp } from '../../store/AppContext';
 import NotificationContainer from '../Notifications/NotificationContainer';
 import {
@@ -6,17 +6,12 @@ import {
   FolderOpen,
   Download,
   Users,
-  BarChart3,
   Settings,
   Search,
-  Bell,
-  HardDrive,
-
   Sun,
   Moon,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { formatBytes } from '../../utils/helpers';
+import { useEffect } from 'react';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -26,15 +21,6 @@ const navItems = [
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
-const pageInfo = {
-  '/': { title: 'Dashboard', subtitle: 'System overview & health' },
-  '/files': { title: 'Files', subtitle: 'Manage shared & downloaded files' },
-  '/downloads': { title: 'Downloads', subtitle: 'Active & completed transfers' },
-  '/peers': { title: 'Peers', subtitle: 'Connected network peers' },
-  '/statistics': { title: 'Statistics', subtitle: 'Network performance & metrics' },
-  '/settings': { title: 'Settings', subtitle: 'Application configuration' },
-  '/developer': { title: 'Developer', subtitle: 'Protocol internals & debugging' },
-};
 
 const MeshLogo = ({ size = 24 }) => (
   <svg 
@@ -65,18 +51,13 @@ const MeshLogo = ({ size = 24 }) => (
 
 export default function Layout() {
   const { state, dispatch, ActionTypes } = useApp();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const location = useLocation();
-  const currentPage = pageInfo[location.pathname] || { title: 'MeshCDN', subtitle: '' };
-
-  const onlinePeers = state.peers.filter((p) => p.status === 'online').length;
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.settings.darkMode ? 'dark' : 'light');
   }, [state.settings.darkMode]);
 
   return (
-    <div className={`app-layout ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div className="app-layout">
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">

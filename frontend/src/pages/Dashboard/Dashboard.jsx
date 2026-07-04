@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useApp } from '../../store/AppContext';
-import { formatBytes, formatSpeed, formatRelativeTime, generateSpeedHistory } from '../../utils/helpers';
+import { formatBytes, formatSpeed, generateSpeedHistory } from '../../utils/helpers';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Users, HardDrive, Download, Upload, CheckCircle, Info, AlertTriangle } from 'lucide-react';
+import { Users, Download, CheckCircle } from 'lucide-react';
 import './Dashboard.css';
 
 const CustomTooltip = ({ active, payload }) => {

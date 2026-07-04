@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '../../store/AppContext';
 import { formatRelativeTime, truncateHash } from '../../utils/helpers';
-import { Users, Wifi, WifiOff, Eye, X, ShieldAlert } from 'lucide-react';
+import { Users, User, Wifi, WifiOff, X } from 'lucide-react';
 import './Peers.css';
 
 const hashToColor = (str) => {
@@ -18,22 +18,24 @@ export default function Peers() {
   const [filter, setFilter] = useState('all');
   const [selectedPeer, setSelectedPeer] = useState(null);
 
-  const allPeers = state.peers || [];
+  const allPeers = state.peers;
   
   const filteredPeers = useMemo(() => {
+    if (!allPeers) return [];
     if (filter === 'all') return allPeers;
     return allPeers.filter(p => p.status === filter);
   }, [allPeers, filter]);
 
-  const onlineCount = allPeers.filter(p => p.status === 'online').length;
-  const offlineCount = allPeers.length - onlineCount;
+  const totalPeersCount = allPeers ? allPeers.length : 0;
+  const onlineCount = allPeers ? allPeers.filter(p => p.status === 'online').length : 0;
+  const offlineCount = totalPeersCount - onlineCount;
 
   return (
     <div className="peers-page">
       <div className="stats-grid peers-stats">
         <div className="stat-card">
           <div className="stat-card-icon blue"><Users size={18} /></div>
-          <div className="stat-card-value">{allPeers.length}</div>
+          <div className="stat-card-value">{totalPeersCount}</div>
           <div className="stat-card-label">Total Peers</div>
         </div>
         <div className="stat-card">
@@ -72,7 +74,7 @@ export default function Peers() {
                   <td>
                     <div className="peer-name-cell">
                       <div className={`peer-avatar ${peer.status}`} style={{ backgroundColor: hashToColor(peer.peer_id) }}>
-                        {peer.peer_id.replace('peer_', '').substring(0, 2).toUpperCase()}
+                        <User size={16} />
                       </div>
                       <span className="text-mono">{truncateHash(peer.peer_id, 8)}</span>
                     </div>
@@ -107,7 +109,7 @@ export default function Peers() {
               <div className="detail-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div className={`peer-avatar large ${selectedPeer.status}`} style={{ backgroundColor: hashToColor(selectedPeer.peer_id) }}>
-                    {selectedPeer.peer_id.replace('peer_', '').substring(0, 2).toUpperCase()}
+                    <User size={22} />
                   </div>
                   <h3 style={{ fontSize: '15px', fontWeight: 600 }}>Peer Details</h3>
                 </div>

@@ -13,13 +13,6 @@ export function formatSpeed(bytesPerSec) {
   return `${formatBytes(bytesPerSec)}/s`;
 }
 
-// Format time duration
-export function formatDuration(seconds) {
-  if (!seconds || seconds <= 0) return '—';
-  if (seconds < 60) return `${Math.round(seconds)}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
-}
 
 // Format relative time (e.g., "2 min ago")
 export function formatRelativeTime(dateStr) {
@@ -42,8 +35,8 @@ export function truncateHash(hash, chars = 8) {
   return `${hash.slice(0, chars)}...${hash.slice(-chars)}`;
 }
 
-// Get file type icon name based on extension or mime type
-export function getFileTypeInfo(fileName, mimeType) {
+// Get file type icon name based on extension
+export function getFileTypeInfo(fileName) {
   const ext = fileName?.split('.').pop()?.toLowerCase();
   const types = {
     // Video

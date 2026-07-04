@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useApp } from '../../store/AppContext';
 import { Settings as SettingsIcon, HardDrive, Gauge } from 'lucide-react';
 import './Settings.css';
@@ -28,6 +27,20 @@ export default function Settings() {
               value={state.settings.downloadFolder} 
               onChange={(e) => handleChange('downloadFolder', e.target.value)} 
             />
+          </div>
+          <div className="setting-row">
+            <div>
+              <div className="setting-label">Ask Where to Save Each File</div>
+              <div className="setting-description">Prompt for destination after each download instead of saving to default folder directly</div>
+            </div>
+            <label className="toggle">
+              <input 
+                type="checkbox" 
+                checked={state.settings.askBeforeDownload ?? true} 
+                onChange={(e) => updateSettings({ askBeforeDownload: e.target.checked })} 
+              />
+              <span className="toggle-slider"></span>
+            </label>
           </div>
         </div>
 
