@@ -17,7 +17,9 @@ export default function NotificationContainer() {
         const Icon = iconMap[notif.type] || Info;
         return (
           <div key={notif.id} className={`notification ${notif.type}`}>
-            <Icon className="notification-icon" />
+            <div className="notification-icon-wrapper">
+              <Icon className="notification-icon" />
+            </div>
             <div className="notification-content">
               <div className="notification-title">{notif.title}</div>
               {notif.message && (
@@ -27,9 +29,11 @@ export default function NotificationContainer() {
             <button
               className="notification-close"
               onClick={() => removeNotification(notif.id)}
+              title="Dismiss notification"
             >
               <X size={14} />
             </button>
+            <div className="notification-progress-bar" />
           </div>
         );
       })}

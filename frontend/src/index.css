@@ -943,126 +943,212 @@ a:hover {
   max-width: 300px;
 }
 
-/* Notification Toast */
+/* ============================================
+   Notification Toast - Neumorphic UI
+   ============================================ */
 .notification-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 24px;
+  right: 24px;
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
   pointer-events: none;
 }
 
 .notification {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 18px;
-  background: rgba(12, 16, 33, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-lg);
-  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--bg-primary);
+  border: none;
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg), 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: notif-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
-  min-width: 280px;
-  max-width: 400px;
+  min-width: 320px;
+  max-width: 420px;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.notification:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: var(--shadow-lg), 0 15px 35px rgba(0, 0, 0, 0.3);
 }
 
 .notification.exiting {
-  animation: slide-out 0.25s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+  animation: notif-slide-out 0.3s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+
+
+.notification.success::before {
+  background: var(--accent-secondary);
+  box-shadow: 0 0 12px var(--accent-secondary);
+}
+
+.notification.error::before {
+  background: var(--accent-danger);
+  box-shadow: 0 0 12px var(--accent-danger);
+}
+
+.notification.warning::before {
+  background: var(--accent-warning);
+  box-shadow: 0 0 12px var(--accent-warning);
+}
+
+.notification.info::before {
+  background: var(--accent-primary);
+  box-shadow: 0 0 12px var(--accent-primary);
+}
+
+/* Neumorphic Icon Badge */
+.notification-icon-wrapper {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-inner);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.notification.success .notification-icon-wrapper {
+  color: var(--accent-secondary);
+}
+
+.notification.error .notification-icon-wrapper {
+  color: var(--accent-danger);
+}
+
+.notification.warning .notification-icon-wrapper {
+  color: var(--accent-warning);
+}
+
+.notification.info .notification-icon-wrapper {
+  color: var(--accent-primary);
 }
 
 .notification-icon {
   width: 20px;
   height: 20px;
-  flex-shrink: 0;
 }
 
-.notification.success {
-  border-color: rgba(6, 214, 160, 0.3);
-}
-
-.notification.success .notification-icon {
-  color: var(--accent-primary);
-}
-
-.notification.error {
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.notification.error .notification-icon {
-  color: var(--accent-danger);
-}
-
-.notification.warning {
-  border-color: rgba(247, 183, 49, 0.3);
-}
-
-.notification.warning .notification-icon {
-  color: var(--accent-warning);
-}
-
-.notification.info {
-  border-color: rgba(56, 189, 248, 0.3);
-}
-
-.notification.info .notification-icon {
-  color: var(--accent-info);
-}
-
+/* Typography & Content */
 .notification-content {
   flex: 1;
+  padding-top: 2px;
 }
 
 .notification-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.2px;
+  line-height: 1.3;
 }
 
 .notification-message {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-secondary);
-  margin-top: 1px;
+  margin-top: 4px;
+  line-height: 1.45;
+  word-break: break-word;
 }
 
+/* Neumorphic Dismiss Button */
 .notification-close {
-  background: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-sm);
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all var(--transition-fast);
+  flex-shrink: 0;
+  margin-top: -2px;
 }
 
 .notification-close:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent-danger);
+  transform: scale(1.08);
+  box-shadow: var(--shadow-md);
 }
 
-@keyframes slide-in {
+.notification-close:active {
+  transform: scale(0.95);
+  box-shadow: var(--shadow-inner-sm);
+}
+
+/* Auto-dismiss Progress Bar */
+.notification-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  opacity: 0.75;
+  animation: notif-progress 5s linear forwards;
+}
+
+.notification.success .notification-progress-bar {
+  background: var(--accent-secondary);
+}
+
+.notification.error .notification-progress-bar {
+  background: var(--accent-danger);
+}
+
+.notification.warning .notification-progress-bar {
+  background: var(--accent-warning);
+}
+
+.notification.info .notification-progress-bar {
+  background: var(--accent-primary);
+}
+
+@keyframes notif-progress {
   from {
-    transform: translateX(100%);
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes notif-slide-in {
+  0% {
+    transform: translateX(120%) scale(0.9);
     opacity: 0;
   }
-  to {
-    transform: translateX(0);
+  70% {
+    transform: translateX(-6px) scale(1.01);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
 }
 
-@keyframes slide-out {
+@keyframes notif-slide-out {
   from {
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
   to {
-    transform: translateX(100%);
+    transform: translateX(120%) scale(0.9);
     opacity: 0;
   }
 }

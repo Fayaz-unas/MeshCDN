@@ -125,7 +125,9 @@
   opacity: 1;
 }
 
-.download-card.error {
+.download-card.error,
+.download-card.failed,
+.download-card.cancelled {
   border-left-color: #ef4444;
 }
 
@@ -371,6 +373,10 @@
 
 .downloads-summary-stat.completed svg {
   color: var(--accent-primary);
+}
+
+.downloads-summary-stat.failed svg {
+  color: #ef4444;
 }
 
 /* Responsive */

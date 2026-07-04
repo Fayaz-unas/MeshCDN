@@ -63,8 +63,6 @@ export default function Peers() {
               <tr>
                 <th>Peer</th>
                 <th>Status</th>
-                <th>IP Address</th>
-                <th>Port</th>
                 <th>Last Seen</th>
               </tr>
             </thead>
@@ -84,13 +82,11 @@ export default function Peers() {
                       {peer.status}
                     </span>
                   </td>
-                  <td>{peer.ip_address}</td>
-                  <td>{peer.port}</td>
                   <td>{formatRelativeTime(peer.last_seen)}</td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="6">
+                  <td colSpan="3">
                     <div className="empty-state">
                       <Users size={48} />
                       <h3>No peers connected</h3>
@@ -131,14 +127,6 @@ export default function Peers() {
                 <span className={`badge ${selectedPeer.status === 'online' ? 'badge-success' : 'badge-danger'}`}>
                   {selectedPeer.status}
                 </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">IP Address</span>
-                <span className="detail-value">{selectedPeer.ip_address}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Port</span>
-                <span className="detail-value">{selectedPeer.port}</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Created At</span>

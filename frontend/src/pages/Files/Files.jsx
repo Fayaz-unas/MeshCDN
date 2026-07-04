@@ -30,22 +30,45 @@ export default function Files() {
   };
 
   const getFilePath = (file) => {
+    if (!file) return '';
+    // Check if the DOM File object directly has the absolute path (older Chromium / native Electron)
+    if (file.path && typeof file.path === 'string' && file.path !== file.name) {
+      return file.path;
+    }
+    // Check if Electron API can resolve it (via preload path cache or webUtils)
     if (isElectron && window.electronAPI && window.electronAPI.getPathForFile) {
       const p = window.electronAPI.getPathForFile(file);
-      if (p) return p;
+      if (p && p !== file.name) return p;
+      if (p && file.path) return p;
     }
-    return file.path || file.name;
+    return file.path || file.name || '';
+  };
+
+  const onDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+    setIsDragging(true);
   };
 
   const onDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
     setIsDragging(true);
   };
 
   const onDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    // Prevent flickering when dragging over child elements inside drop-zone
+    if (e.currentTarget && e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) {
+      return;
+    }
     setIsDragging(false);
   };
 
@@ -53,22 +76,24 @@ export default function Files() {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      const filePath = getFilePath(file);
-      if (filePath) {
-        shareFile(filePath);
-      }
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      Array.from(e.dataTransfer.files).forEach(file => {
+        const filePath = getFilePath(file);
+        if (filePath) {
+          shareFile(filePath);
+        }
+      });
     }
   };
 
   const handleFileSelect = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const filePath = getFilePath(file);
-      if (filePath) {
-        shareFile(filePath);
-      }
+      Array.from(e.target.files).forEach(file => {
+        const filePath = getFilePath(file);
+        if (filePath) {
+          shareFile(filePath);
+        }
+      });
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -111,9 +136,8 @@ export default function Files() {
   useEffect(() => {
     document.addEventListener('click', closeContextMenu);
     const preventGlobalDrag = (e) => {
-      if (!e.target.closest('.drop-zone') && !e.target.closest('.modal-content')) {
-        e.preventDefault();
-      }
+      // Prevent browser from navigating away when dropping files anywhere in the window
+      e.preventDefault();
     };
     window.addEventListener('dragover', preventGlobalDrag);
     window.addEventListener('drop', preventGlobalDrag);
@@ -133,11 +157,18 @@ export default function Files() {
 
   return (
     <>
-      <div className="files-page">
+      <div 
+        className="files-page"
+        onDragEnter={onDragEnter}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+      >
       
 
       <div 
         className={`drop-zone ${isDragging ? 'active' : ''}`}
+        onDragEnter={onDragEnter}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}

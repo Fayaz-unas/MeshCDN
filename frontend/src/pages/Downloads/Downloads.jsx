@@ -10,6 +10,8 @@ const statusConfig = {
   connecting:  { label: 'Connecting',  badge: 'warning', icon: Loader },
   paused:      { label: 'Paused',      badge: 'warning', icon: Pause },
   error:       { label: 'Error',       badge: 'danger', icon: AlertCircle },
+  failed:      { label: 'Failed',      badge: 'danger', icon: AlertCircle },
+  cancelled:   { label: 'Cancelled',   badge: 'danger', icon: X },
 };
 
 export default function Downloads() {
@@ -26,12 +28,14 @@ export default function Downloads() {
     if (activeTab === 'all') return true;
     if (activeTab === 'active') return d.status === 'downloading' || d.status === 'connecting' || d.status === 'paused';
     if (activeTab === 'completed') return d.status === 'completed';
+    if (activeTab === 'failed') return d.status === 'failed' || d.status === 'error' || d.status === 'cancelled';
     return true;
   });
 
   // Counts for tab badges
   const activeCount = allDownloads.filter((d) => d.status === 'downloading' || d.status === 'connecting' || d.status === 'paused').length;
   const completedCount = allDownloads.filter((d) => d.status === 'completed').length;
+  const failedCount = allDownloads.filter((d) => d.status === 'failed' || d.status === 'error' || d.status === 'cancelled').length;
 
   const handleDownload = () => {
     if (!hashInput.trim()) return;
@@ -73,6 +77,14 @@ export default function Downloads() {
               <CheckCircle size={14} />
               <span>Completed:</span>
               <span className="stat-value">{completedCount}</span>
+            </button>
+            <button
+              className={`downloads-summary-stat failed ${activeTab === 'failed' ? 'active-tab' : ''}`}
+              onClick={() => setActiveTab('failed')}
+            >
+              <AlertCircle size={14} />
+              <span>Failed:</span>
+              <span className="stat-value">{failedCount}</span>
             </button>
           </div>
         </div>
@@ -121,7 +133,13 @@ export default function Downloads() {
                   <span>{download.peers} peers</span>
                   <span>
                     <Clock size={13} />
-                    {download.status === 'completed' ? 'Completed' : download.eta}
+                    {download.status === 'completed'
+                      ? 'Completed'
+                      : download.status === 'failed' || download.status === 'error'
+                      ? 'Failed'
+                      : download.status === 'cancelled'
+                      ? 'Cancelled'
+                      : download.eta}
                   </span>
                 </div>
 
@@ -136,7 +154,12 @@ export default function Downloads() {
                       <Play size={14} /> Resume
                     </button>
                   )}
-                  {download.status !== 'completed' && download.status !== 'cancelled' && (
+                  {(download.status === 'failed' || download.status === 'error' || download.status === 'cancelled') && (
+                    <button className="btn btn-sm btn-primary" onClick={() => downloadFile(download.fileHash)}>
+                      <Play size={14} /> Retry
+                    </button>
+                  )}
+                  {(download.status === 'downloading' || download.status === 'connecting' || download.status === 'paused') && (
                     <button className="btn btn-sm btn-danger" onClick={() => cancelDownload(download.id, download.fileHash)}>
                       <X size={14} /> Cancel
                     </button>
@@ -157,6 +180,8 @@ export default function Downloads() {
               ? 'You haven\'t completed any downloads yet.'
               : activeTab === 'active'
               ? 'No active downloads at the moment.'
+              : activeTab === 'failed'
+              ? 'No failed or cancelled downloads.'
               : 'Start downloading files from the mesh network by clicking the button above.'}
           </p>
         </div>
